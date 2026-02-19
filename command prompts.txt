@@ -1,0 +1,18 @@
+(base) C:\Users\ui902043\streamlit-crash-course>conda-script.py
+
+(base) C:\Users\ui902043\streamlit-crash-course>cd .venv/scripts
+
+(base) C:\Users\ui902043\streamlit-crash-course\.venv\Scripts>activate
+
+(.venv) (base) C:\Users\ui902043\streamlit-crash-course\.venv\Scripts>cd../..
+
+(.venv) (base) C:\Users\ui902043\streamlit-crash-course>cd ../..
+
+(.venv) (base) C:\Users>cd ui902043/streamlit
+The system cannot find the path specified.
+
+(.venv) (base) C:\Users>cd ui902043/
+
+(.venv) (base) C:\Users\ui902043>cd streamlit-crash-course
+
+(.venv) (base) C:\Users\ui902043\streamlit-crash-course>

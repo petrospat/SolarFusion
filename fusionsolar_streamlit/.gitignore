@@ -1,0 +1,33 @@
+
+# --- Python bytecode & caches ---
+__pycache__/
+*.pyc
+*.pyo
+
+# --- Virtual environments (local-only) ---
+.venv/
+venv/
+env/
+
+# --- Streamlit secrets (credentials!) ---
+.streamlit/secrets.toml
+
+# --- Local environment/config files (optional but common) ---
+.env
+*.env
+
+# --- VS Code & editor settings (keep only if you want them tracked) ---
+.vscode/
+*.code-workspace
+
+# --- Test/temporary artifacts (if you add tests/tools later) ---
+.coverage
+htmlcov/
+.pytest_cache/
+.ipynb_checkpoints/
+*.log
+*.tmp
+
+# --- OS junk files ---
+.DS_Store   # macOS
+Thumbs.db   # Windows

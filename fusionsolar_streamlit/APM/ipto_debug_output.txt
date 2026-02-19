@@ -1,0 +1,1379 @@
+======================================================================
+ADMIE FileCategory Discovery  |  target: 2026-02-17
+ENTSO-E signature: 2.57 and 39.96 must both appear
+======================================================================
+
+[0] admie.gr: HTTP 200  -> reachable
+
+────────────────────────────────────────────────────────────
+FileCategory: DAM_ResultsSummary
+  [2026-02-17] empty list
+  [2026-02-16] empty list
+
+────────────────────────────────────────────────────────────
+FileCategory: ISP1ISPResults
+  [2026-02-17] 1 file(s)  keys=['file_path', 'file_description', 'file_process', 'file_datatype', 'file_coverageperiod', 'file_fromdate', 'file_todate', 'file_published']
+  [2026-02-17] downloading files/attached-files/type-file/2026/02/20260217_ISP1ISPResults_01.xlsx
+  [2026-02-17] 191,701 bytes
+  [2026-02-17] sheets: ['20260217_ISP', '20260217_Activated Energy', '20260217_CCGT Schedules', '20260217_FCR', '20260217_aFRR', '20260217_mFRR', '20260217_RR', '20260217_GenericConstraints']
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_ISP' col='Unnamed: 20'
+         sample values (first 12): [4410.0, 100.0, 4510.0, 1932.0, 3545.0, 1848.9, 1959.0, 3807.9, 0.0, 75.0, -696.9, 2071.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_ISP' row_label='THISVI_CC'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_Activated Energy' col='Unnamed: 20'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 430.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_Activated Energy' row_label='THISVI_CC'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 1'
+         sample values (first 12): [65.0, 65.0, 12.9, 12.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='FCR : ISP1_2026-02-17_20260216183859'
+         sample values (first 12): [65.0, 65.0, 12.9, 12.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 3'
+         sample values (first 12): [65.0, 65.0, 12.9, 12.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 4'
+         sample values (first 12): [65.0, 65.0, 12.9, 12.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 6'
+         sample values (first 12): [65.0, 65.0, 12.9, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 7'
+         sample values (first 12): [65.0, 65.0, 12.9, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 8'
+         sample values (first 12): [65.0, 65.0, 12.9, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 9'
+         sample values (first 12): [65.0, 65.0, 12.9, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 10'
+         sample values (first 12): [65.0, 65.0, 12.9, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 11'
+         sample values (first 12): [65.0, 65.0, 12.9, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 12'
+         sample values (first 12): [65.0, 65.0, 12.9, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 13'
+         sample values (first 12): [65.0, 65.0, 8.7, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='2026-02-17 00:00:00'
+         sample values (first 12): [65.0, 65.0, 8.7, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 15'
+         sample values (first 12): [65.0, 65.0, 8.7, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 16'
+         sample values (first 12): [65.0, 65.0, 8.7, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 17'
+         sample values (first 12): [65.0, 65.0, 8.7, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 18'
+         sample values (first 12): [65.0, 65.0, 8.7, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 19'
+         sample values (first 12): [65.0, 65.0, 8.7, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 20'
+         sample values (first 12): [65.0, 65.0, 8.7, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_FCR' row_label='MEGALOPOLI_V Up'
+         sample values (first 12): [40.0, 40.0, 40.0, 40.0, 58.0, 58.0, 58.0, 58.0, 58.0, 58.0, 58.0, 58.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_FCR' row_label='MEGALOPOLI_V Down'
+         sample values (first 12): [57, 57, 57, 57, 57, 40, 40, 40, 40, 40, 40, 40]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 1'
+         sample values (first 12): [250.0, 120.0, 21.52, 8.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 13'
+         sample values (first 12): [250.0, 120.0, 21.52, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='2026-02-17 00:00:00'
+         sample values (first 12): [250.0, 120.0, 21.52, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 15'
+         sample values (first 12): [250.0, 120.0, 21.52, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 16'
+         sample values (first 12): [250.0, 120.0, 21.52, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 17'
+         sample values (first 12): [250.0, 120.0, 25.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 18'
+         sample values (first 12): [250.0, 120.0, 25.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 19'
+         sample values (first 12): [250.0, 120.0, 25.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 20'
+         sample values (first 12): [250.0, 120.0, 25.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 68'
+         sample values (first 12): [690.0, 130.0, 25.31, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 69'
+         sample values (first 12): [750.0, 130.0, 25.31, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 70'
+         sample values (first 12): [750.0, 130.0, 20.8, 1.14, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_aFRR' row_label='MEGALOPOLI_V Down'
+         sample values (first 12): [40.0, 59.0, 59.0, 59.0, 41.0, 58.0, 58.0, 58.0, 57.0, 57.0, 57.0, 57.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_aFRR' row_label='THESSALONIKI_CC Up'
+         sample values (first 12): [80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_aFRR' row_label='THESSALONIKI_CC Down'
+         sample values (first 12): [80, 61, 61, 61, 79, 62, 62, 62, 63, 63, 63, 63]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_aFRR' row_label='THESAVROS2 Up'
+         sample values (first 12): [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 35'
+         sample values (first 12): [680.0, 240.0, 25.3, 1.3, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 44'
+         sample values (first 12): [680.0, 240.0, 23.2, 1.3, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 47'
+         sample values (first 12): [680.0, 240.0, 23.2, 1.3, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 48'
+         sample values (first 12): [680.0, 240.0, 23.2, 1.3, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 49'
+         sample values (first 12): [680.0, 240.0, 23.2, 1.3, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 66'
+         sample values (first 12): [760.0, 250.0, 26.3, 4.08, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 67'
+         sample values (first 12): [770.0, 250.0, 26.3, 1.3, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 68'
+         sample values (first 12): [790.0, 250.0, 24.3, 1.3, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 90'
+         sample values (first 12): [820.0, 250.0, 26.3, 2.53, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_mFRR' row_label='Price Down'
+         sample values (first 12): [54.13, 55.67, 55.67, 55.67, 55.67, 55.67, 45.05, 55.67, 55.67, 55.67, 55.67, 55.67]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_mFRR' row_label='MEGALOPOLI_V Up'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 21.0, 21.0, 21.0, 21.0, 22.0, 22.0, 22.0, 22.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_mFRR' row_label='KREMASTA Up'
+         sample values (first 12): [1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_mFRR' row_label='STRATOS1 Down'
+         sample values (first 12): [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_mFRR' row_label='THESAVROS2 Up'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_mFRR' row_label='THESAVROS3 Up'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_mFRR' row_label='Hydro Units UP Total'
+         sample values (first 12): [293.0, 238.0, 238.0, 238.0, 217.0, 217.0, 227.0, 226.0, 223.5, 225.0, 225.0, 235.0]
+  [2026-02-16] 1 file(s)  keys=['file_path', 'file_description', 'file_process', 'file_datatype', 'file_coverageperiod', 'file_fromdate', 'file_todate', 'file_published']
+  [2026-02-16] downloading files/attached-files/type-file/2026/02/20260216_ISP1ISPResults_01.xlsx
+  [2026-02-16] 192,227 bytes
+  [2026-02-16] sheets: ['20260216_ISP', '20260216_Activated Energy', '20260216_CCGT Schedules', '20260216_FCR', '20260216_aFRR', '20260216_mFRR', '20260216_RR', '20260216_GenericConstraints']
+  [2026-02-16] SCORE=100  COLUMN format | sheet='20260216_Activated Energy' col='Unnamed: 24'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -110.0, 37.17]
+  [2026-02-16] SCORE=100  COLUMN format | sheet='20260216_aFRR' col='Unnamed: 92'
+         sample values (first 12): [780.0, 120.0, 25.0, 5.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=100  ROW format | sheet='20260216_aFRR' row_label='THESSALONIKI_CC Down'
+         sample values (first 12): [0.0, 0.0, 42.0, 42.0, 80.0, 60.0, 80.0, 60.0, 0.0, 80.0, 80.0, 80.0]
+  [2026-02-16] SCORE=100  COLUMN format | sheet='20260216_mFRR' col='Unnamed: 24'
+         sample values (first 12): [780.0, 180.0, 13.3, 7.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_ISP' col='Unnamed: 64'
+         sample values (first 12): [5630.0, 107.0, 5737.0, 1529.0, 3917.0, 2238.9, 1754.0, 3992.9, 0.0, 0.0, -4.9, 2168.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_ISP' col='Unnamed: 93'
+         sample values (first 12): [4850.0, 113.0, 4963.0, 1364.0, 2854.0, 2481.0, 1596.0, 4077.0, 0.0, 0.0, 0.0, 1968.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_ISP' row_label='Cleared Energy Up'
+         sample values (first 12): [86.62, 80.96, 52.44, 45.11, 49.12, 53.38, 94.5, 75.75, 88.81, 92.0, 89.5, 89.5]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_ISP' row_label='Greece Cleared Energy Up'
+         sample values (first 12): [86.62, 80.96, 52.44, 45.11, 49.12, 53.38, 94.5, 75.75, 88.81, 92.0, 89.5, 89.5]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_ISP' row_label='PROTERGIA_CC'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_Activated Energy' col='Unnamed: 64'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 124.0, -276.03]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_Activated Energy' col='Unnamed: 96'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 32.99, -342.34]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_Activated Energy' row_label='PROTERGIA_CC'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_Activated Energy' row_label='KASTRAKI'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_Activated Energy' row_label='SFIKIA'
+         sample values (first 12): [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_Activated Energy' row_label='POURNARI1'
+         sample values (first 12): [-57.0, -100.0, -100.0, 0.0, 0.0, 0.0, -61.56, -100.0, -99.94, -63.08, -64.25, -99.95]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 1'
+         sample values (first 12): [65.0, 65.0, 19.91, 12.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='FCR : ISP1_2026-02-16_20260215172515'
+         sample values (first 12): [65.0, 65.0, 19.91, 12.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 3'
+         sample values (first 12): [65.0, 65.0, 19.91, 12.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 4'
+         sample values (first 12): [65.0, 65.0, 19.9, 12.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 13'
+         sample values (first 12): [65.0, 65.0, 9.91, 18.24, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 15'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 17'
+         sample values (first 12): [65.0, 65.0, 9.91, 12.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 18'
+         sample values (first 12): [65.0, 65.0, 9.91, 18.27, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 19'
+         sample values (first 12): [65.0, 65.0, 9.91, 12.24, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 20'
+         sample values (first 12): [65.0, 65.0, 9.91, 6.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 22'
+         sample values (first 12): [65.0, 65.0, 9.91, 16.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 23'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 24'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 25'
+         sample values (first 12): [65.0, 65.0, 19.91, 9.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 26'
+         sample values (first 12): [65.0, 65.0, 19.91, 9.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 27'
+         sample values (first 12): [65.0, 65.0, 19.91, 5.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 41'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 42'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 43'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 44'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 45'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 46'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 47'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 48'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 49'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 50'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 51'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 52'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 53'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 54'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 57'
+         sample values (first 12): [65.0, 65.0, 9.91, 101.72, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 58'
+         sample values (first 12): [65.0, 65.0, 9.91, 101.72, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 59'
+         sample values (first 12): [65.0, 65.0, 9.91, 101.72, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 60'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 96'
+         sample values (first 12): [65.0, 65.0, 10.85, 11.09, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_FCR' row_label='AG_NIKOLAOS2 Up'
+         sample values (first 12): [40, 40, 40, 40, 57, 57, 57, 57, 57, 57, 57, 57]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_FCR' row_label='AG_NIKOLAOS2 Down'
+         sample values (first 12): [57.0, 57.0, 57.0, 57.0, 57.0, 57.0, 57.0, 57.0, 57.0, 57.0, 57.0, 57.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 1'
+         sample values (first 12): [260.0, 120.0, 7.1, 9.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='aFRR : ISP1_2026-02-16_20260215172515'
+         sample values (first 12): [260.0, 120.0, 7.1, 8.96, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 3'
+         sample values (first 12): [260.0, 120.0, 7.1, 8.07, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 4'
+         sample values (first 12): [260.0, 120.0, 7.1, 8.31, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 5'
+         sample values (first 12): [260.0, 120.0, 7.1, 7.47, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 6'
+         sample values (first 12): [260.0, 120.0, 7.1, 8.75, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 7'
+         sample values (first 12): [260.0, 120.0, 7.1, 9.44, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 8'
+         sample values (first 12): [260.0, 120.0, 7.1, 8.7, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 9'
+         sample values (first 12): [260.0, 120.0, 7.1, 9.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 10'
+         sample values (first 12): [260.0, 120.0, 7.1, 12.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 11'
+         sample values (first 12): [260.0, 120.0, 7.1, 11.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 12'
+         sample values (first 12): [260.0, 120.0, 7.1, 9.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 13'
+         sample values (first 12): [260.0, 120.0, 7.1, 18.23, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='2026-02-16 00:00:00'
+         sample values (first 12): [260.0, 120.0, 7.1, 10.99, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 15'
+         sample values (first 12): [260.0, 120.0, 7.1, 9.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 16'
+         sample values (first 12): [260.0, 120.0, 15.0, 9.49, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 17'
+         sample values (first 12): [260.0, 120.0, 4.5, 12.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 18'
+         sample values (first 12): [260.0, 120.0, 4.5, 18.26, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 19'
+         sample values (first 12): [260.0, 120.0, 4.5, 12.23, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 21'
+         sample values (first 12): [260.0, 120.0, 9.89, 17.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 22'
+         sample values (first 12): [480.0, 120.0, 24.89, 17.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 24'
+         sample values (first 12): [740.0, 120.0, 29.9, 13.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 26'
+         sample values (first 12): [750.0, 120.0, 26.61, 17.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 27'
+         sample values (first 12): [750.0, 120.0, 26.61, 15.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 28'
+         sample values (first 12): [750.0, 120.0, 29.9, 14.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 29'
+         sample values (first 12): [750.0, 120.0, 29.9, 3.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 30'
+         sample values (first 12): [730.0, 120.0, 26.61, 15.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 31'
+         sample values (first 12): [710.0, 120.0, 29.9, 17.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 32'
+         sample values (first 12): [710.0, 120.0, 29.9, 22.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 33'
+         sample values (first 12): [660.0, 120.0, 44.06, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 35'
+         sample values (first 12): [630.0, 120.0, 58.52, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 37'
+         sample values (first 12): [630.0, 120.0, 50.9, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 38'
+         sample values (first 12): [650.0, 120.0, 51.5, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 56'
+         sample values (first 12): [670.0, 120.0, 51.35, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 60'
+         sample values (first 12): [670.0, 120.0, 29.89, 9.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 61'
+         sample values (first 12): [620.0, 120.0, 58.26, 100.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 62'
+         sample values (first 12): [650.0, 120.0, 43.6, 20.44, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 64'
+         sample values (first 12): [690.0, 120.0, 21.0, 4.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 65'
+         sample values (first 12): [680.0, 130.0, 20.1, 4.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 67'
+         sample values (first 12): [720.0, 130.0, 26.6, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 68'
+         sample values (first 12): [740.0, 130.0, 41.32, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 69'
+         sample values (first 12): [750.0, 130.0, 21.28, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 70'
+         sample values (first 12): [750.0, 130.0, 26.6, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 71'
+         sample values (first 12): [790.0, 130.0, 21.28, 1.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 72'
+         sample values (first 12): [790.0, 130.0, 21.78, 1.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 73'
+         sample values (first 12): [830.0, 130.0, 20.32, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 74'
+         sample values (first 12): [830.0, 130.0, 22.87, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 75'
+         sample values (first 12): [830.0, 130.0, 21.11, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 77'
+         sample values (first 12): [830.0, 130.0, 17.2, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 79'
+         sample values (first 12): [830.0, 130.0, 17.2, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 81'
+         sample values (first 12): [810.0, 130.0, 27.32, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 85'
+         sample values (first 12): [810.0, 130.0, 9.91, 5.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 86'
+         sample values (first 12): [810.0, 130.0, 25.0, 9.41, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 87'
+         sample values (first 12): [800.0, 130.0, 29.89, 3.62, 0.0, 0.0, 40.5, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 88'
+         sample values (first 12): [800.0, 130.0, 25.0, 9.41, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 90'
+         sample values (first 12): [780.0, 120.0, 29.89, 2.84, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 91'
+         sample values (first 12): [780.0, 120.0, 29.89, 9.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 93'
+         sample values (first 12): [750.0, 120.0, 25.0, 3.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 94'
+         sample values (first 12): [750.0, 120.0, 29.89, 7.43, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 95'
+         sample values (first 12): [740.0, 120.0, 29.89, 9.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 96'
+         sample values (first 12): [740.0, 120.0, 24.9, 9.63, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_aFRR' row_label='MEGALOPOLI_V Down'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_aFRR' row_label='HERON_CC Down'
+         sample values (first 12): [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_aFRR' row_label='THESSALONIKI_CC Up'
+         sample values (first 12): [40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 20.0, 20.0, 40.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_aFRR' row_label='AG_NIKOLAOS2 Down'
+         sample values (first 12): [120.0, 120.0, 78.0, 78.0, 40.0, 60.0, 40.0, 60.0, 120.0, 40.0, 40.0, 40.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_aFRR' row_label='KASTRAKI Up'
+         sample values (first 12): [40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_aFRR' row_label='ILARIONAS Up'
+         sample values (first 12): [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_aFRR' row_label='THESAVROS3 Up'
+         sample values (first 12): [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 1'
+         sample values (first 12): [360.0, 240.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='mFRR : ISP1_2026-02-16_20260215172515'
+         sample values (first 12): [350.0, 240.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 3'
+         sample values (first 12): [350.0, 240.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 4'
+         sample values (first 12): [350.0, 230.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 5'
+         sample values (first 12): [340.0, 230.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 6'
+         sample values (first 12): [340.0, 220.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 7'
+         sample values (first 12): [340.0, 220.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 8'
+         sample values (first 12): [340.0, 210.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 9'
+         sample values (first 12): [330.0, 210.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 10'
+         sample values (first 12): [330.0, 210.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 11'
+         sample values (first 12): [330.0, 200.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 12'
+         sample values (first 12): [320.0, 200.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 13'
+         sample values (first 12): [320.0, 190.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='2026-02-16 00:00:00'
+         sample values (first 12): [320.0, 190.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 20'
+         sample values (first 12): [340.0, 180.0, 4.1, 4.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 22'
+         sample values (first 12): [530.0, 180.0, 5.4, 10.36, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 23'
+         sample values (first 12): [540.0, 180.0, 5.4, 7.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 25'
+         sample values (first 12): [780.0, 180.0, 18.9, 20.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 26'
+         sample values (first 12): [780.0, 180.0, 26.3, 6.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 32'
+         sample values (first 12): [750.0, 180.0, 14.89, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 37'
+         sample values (first 12): [700.0, 190.0, 25.3, 20.0, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 38'
+         sample values (first 12): [720.0, 190.0, 25.3, 20.0, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 41'
+         sample values (first 12): [710.0, 190.0, 24.8, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 42'
+         sample values (first 12): [720.0, 190.0, 24.8, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 43'
+         sample values (first 12): [710.0, 190.0, 25.3, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 44'
+         sample values (first 12): [710.0, 190.0, 24.4, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 45'
+         sample values (first 12): [710.0, 190.0, 24.0, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 46'
+         sample values (first 12): [700.0, 190.0, 24.0, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 47'
+         sample values (first 12): [710.0, 190.0, 24.0, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 48'
+         sample values (first 12): [710.0, 190.0, 24.0, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 49'
+         sample values (first 12): [700.0, 190.0, 24.0, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 50'
+         sample values (first 12): [700.0, 190.0, 24.0, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 51'
+         sample values (first 12): [710.0, 190.0, 24.0, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 52'
+         sample values (first 12): [720.0, 190.0, 24.0, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 53'
+         sample values (first 12): [720.0, 190.0, 24.8, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 54'
+         sample values (first 12): [730.0, 190.0, 24.8, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 55'
+         sample values (first 12): [730.0, 190.0, 24.4, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 56'
+         sample values (first 12): [760.0, 200.0, 24.8, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 57'
+         sample values (first 12): [720.0, 200.0, 24.0, 60.16, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 58'
+         sample values (first 12): [740.0, 200.0, 25.3, 60.16, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 59'
+         sample values (first 12): [750.0, 200.0, 24.8, 60.16, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 85'
+         sample values (first 12): [850.0, 230.0, 22.2, 2.08, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 87'
+         sample values (first 12): [840.0, 230.0, 22.2, 3.25, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 90'
+         sample values (first 12): [810.0, 230.0, 6.3, 2.52, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 93'
+         sample values (first 12): [790.0, 240.0, 6.3, 5.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 94'
+         sample values (first 12): [790.0, 240.0, 6.3, 5.97, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 95'
+         sample values (first 12): [780.0, 250.0, 31.0, 7.85, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 96'
+         sample values (first 12): [780.0, 250.0, 6.3, 7.85, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='Price Down'
+         sample values (first 12): [12.8, 12.8, 12.8, 12.8, 12.8, 12.8, 12.8, 12.8, 12.8, 12.8, 12.8, 12.8]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='THESSALONIKI_CC Up'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='THESSALONIKI_CC Down'
+         sample values (first 12): [120.0, 120.0, 120.0, 120.0, 100.0, 120.0, 100.0, 120.0, 120.0, 120.0, 120.0, 100.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='Thermal Units DOWN Total'
+         sample values (first 12): [120.0, 120.0, 120.0, 120.0, 100.0, 120.0, 100.0, 120.0, 120.0, 120.0, 120.0, 100.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='KASTRAKI Up'
+         sample values (first 12): [40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='KASTRAKI Down'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='SFIKIA Down'
+         sample values (first 12): [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='POURNARI1 Up'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='Hydro Units UP Total'
+         sample values (first 12): [360.0, 350.0, 350.0, 349.0, 339.0, 339.0, 339.0, 339.0, 329.0, 329.0, 329.0, 319.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='Hydro Units DOWN Total'
+         sample values (first 12): [120.0, 120.0, 120.0, 110.0, 130.0, 100.0, 120.0, 90.0, 90.0, 90.0, 80.0, 100.0]
+
+────────────────────────────────────────────────────────────
+FileCategory: ISP2ISPResults
+  [2026-02-17] 1 file(s)  keys=['file_path', 'file_description', 'file_process', 'file_datatype', 'file_coverageperiod', 'file_fromdate', 'file_todate', 'file_published']
+  [2026-02-17] downloading files/attached-files/type-file/2026/02/20260217_ISP2ISPResults_01.xlsx
+  [2026-02-17] 192,477 bytes
+  [2026-02-17] sheets: ['20260217_ISP', '20260217_Activated Energy', '20260217_CCGT Schedules', '20260217_FCR', '20260217_aFRR', '20260217_mFRR', '20260217_RR', '20260217_GenericConstraints']
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_ISP' col='Unnamed: 20'
+         sample values (first 12): [4410.0, 100.0, 4510.0, 1932.0, 3545.0, 1848.9, 1959.0, 3807.9, 0.0, 75.0, -724.9, 2043.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_ISP' col='Unnamed: 55'
+         sample values (first 12): [6530.0, 114.0, 6644.0, 753.0, 6175.0, 1543.9, 793.0, 2336.9, 0.0, 0.0, -502.49, 1365.4]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_ISP' row_label='THISVI_CC'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_ISP' row_label='KREMASTA'
+         sample values (first 12): [397.0, 376.0, 376.0, 376.0, 397.0, 397.0, 397.0, 350.0, 397.0, 397.0, 397.0, 397.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_Activated Energy' col='Unnamed: 20'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 430.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_Activated Energy' col='Unnamed: 65'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 14.76, 0.0, 0.0, 0.0, 0.0, 0.0, 402.0, -37.62]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_Activated Energy' row_label='THISVI_CC'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_Activated Energy' row_label='KASTRAKI'
+         sample values (first 12): [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 1'
+         sample values (first 12): [65.0, 65.0, 12.9, 12.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='FCR : ISP2_2026-02-17_20260216230831'
+         sample values (first 12): [65.0, 65.0, 12.9, 12.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 3'
+         sample values (first 12): [65.0, 65.0, 12.9, 12.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 4'
+         sample values (first 12): [65.0, 65.0, 12.9, 12.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 6'
+         sample values (first 12): [65.0, 65.0, 12.9, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 7'
+         sample values (first 12): [65.0, 65.0, 12.9, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 8'
+         sample values (first 12): [65.0, 65.0, 12.9, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 9'
+         sample values (first 12): [65.0, 65.0, 12.9, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 10'
+         sample values (first 12): [65.0, 65.0, 12.9, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 11'
+         sample values (first 12): [65.0, 65.0, 12.9, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 12'
+         sample values (first 12): [65.0, 65.0, 12.9, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 13'
+         sample values (first 12): [65.0, 65.0, 8.7, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='2026-02-17 00:00:00'
+         sample values (first 12): [65.0, 65.0, 8.7, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 15'
+         sample values (first 12): [65.0, 65.0, 8.7, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 16'
+         sample values (first 12): [65.0, 65.0, 8.7, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 17'
+         sample values (first 12): [65.0, 65.0, 8.7, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 18'
+         sample values (first 12): [65.0, 65.0, 8.7, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 19'
+         sample values (first 12): [65.0, 65.0, 8.7, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 20'
+         sample values (first 12): [65.0, 65.0, 8.7, 7.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_FCR' row_label='MEGALOPOLI_V Up'
+         sample values (first 12): [40.0, 40.0, 40.0, 40.0, 58.0, 58.0, 58.0, 58.0, 58.0, 58.0, 58.0, 58.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_FCR' row_label='MEGALOPOLI_V Down'
+         sample values (first 12): [57, 57, 57, 57, 57, 40, 40, 40, 40, 40, 40, 40]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 1'
+         sample values (first 12): [250.0, 120.0, 21.52, 8.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 13'
+         sample values (first 12): [250.0, 120.0, 21.52, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='2026-02-17 00:00:00'
+         sample values (first 12): [250.0, 120.0, 21.52, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 15'
+         sample values (first 12): [250.0, 120.0, 21.52, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 16'
+         sample values (first 12): [250.0, 120.0, 21.52, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 17'
+         sample values (first 12): [250.0, 120.0, 25.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 18'
+         sample values (first 12): [250.0, 120.0, 25.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 19'
+         sample values (first 12): [250.0, 120.0, 25.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 20'
+         sample values (first 12): [250.0, 120.0, 25.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 68'
+         sample values (first 12): [690.0, 130.0, 25.31, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 69'
+         sample values (first 12): [750.0, 130.0, 25.31, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 70'
+         sample values (first 12): [750.0, 130.0, 20.8, 1.14, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 96'
+         sample values (first 12): [690.0, 120.0, 21.0, 10.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_aFRR' row_label='MEGALOPOLI_V Down'
+         sample values (first 12): [40.0, 59.0, 59.0, 59.0, 41.0, 58.0, 58.0, 58.0, 57.0, 57.0, 57.0, 57.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_aFRR' row_label='THESSALONIKI_CC Up'
+         sample values (first 12): [80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_aFRR' row_label='THESSALONIKI_CC Down'
+         sample values (first 12): [80, 61, 61, 61, 79, 62, 62, 62, 63, 63, 63, 63]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_aFRR' row_label='THESAVROS2 Up'
+         sample values (first 12): [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 35'
+         sample values (first 12): [680.0, 240.0, 25.3, 1.3, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 40'
+         sample values (first 12): [700.0, 240.0, 26.3, 55.67, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 44'
+         sample values (first 12): [680.0, 240.0, 23.2, 1.3, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 47'
+         sample values (first 12): [680.0, 240.0, 23.2, 1.3, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 48'
+         sample values (first 12): [680.0, 240.0, 23.2, 1.3, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 49'
+         sample values (first 12): [680.0, 240.0, 23.2, 1.3, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 60'
+         sample values (first 12): [750.0, 250.0, 24.3, 55.67, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 66'
+         sample values (first 12): [760.0, 250.0, 33.2, 4.08, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 67'
+         sample values (first 12): [770.0, 250.0, 26.3, 1.3, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 68'
+         sample values (first 12): [790.0, 250.0, 24.3, 1.3, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 90'
+         sample values (first 12): [820.0, 250.0, 26.3, 2.53, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_mFRR' row_label='Price Down'
+         sample values (first 12): [54.13, 55.67, 55.67, 55.67, 55.67, 55.67, 45.05, 55.67, 55.67, 55.67, 55.67, 55.67]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_mFRR' row_label='MEGALOPOLI_V Up'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 21.0, 21.0, 21.0, 21.0, 22.0, 22.0, 22.0, 22.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_mFRR' row_label='HERON_CC Up'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_mFRR' row_label='KREMASTA Up'
+         sample values (first 12): [1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_mFRR' row_label='KASTRAKI Up'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_mFRR' row_label='STRATOS1 Down'
+         sample values (first 12): [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_mFRR' row_label='THESAVROS3 Up'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_mFRR' row_label='PLASTIRAS Up'
+         sample values (first 12): [43.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_mFRR' row_label='Hydro Units UP Total'
+         sample values (first 12): [293.0, 238.0, 238.0, 238.0, 217.0, 217.0, 227.0, 226.0, 223.5, 225.0, 225.0, 235.0]
+  [2026-02-16] 1 file(s)  keys=['file_path', 'file_description', 'file_process', 'file_datatype', 'file_coverageperiod', 'file_fromdate', 'file_todate', 'file_published']
+  [2026-02-16] downloading files/attached-files/type-file/2026/02/20260216_ISP2ISPResults_01.xlsx
+  [2026-02-16] 193,640 bytes
+  [2026-02-16] sheets: ['20260216_ISP', '20260216_Activated Energy', '20260216_CCGT Schedules', '20260216_FCR', '20260216_aFRR', '20260216_mFRR', '20260216_RR', '20260216_GenericConstraints']
+  [2026-02-16] SCORE=100  COLUMN format | sheet='20260216_mFRR' col='Unnamed: 24'
+         sample values (first 12): [780.0, 180.0, 31.0, 7.8, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_ISP' col='Unnamed: 64'
+         sample values (first 12): [5640.0, 107.0, 5747.0, 1529.0, 3905.0, 2314.0, 1756.0, 4070.0, 0.0, 0.0, 0.0, 2228.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_ISP' col='Unnamed: 94'
+         sample values (first 12): [4720.0, 110.0, 4830.0, 1364.0, 2736.0, 2498.0, 1564.0, 4062.0, 0.0, 0.0, 0.0, 1968.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_ISP' row_label='Cleared Energy Up'
+         sample values (first 12): [75.76, 70.47, 52.3, 70.83, 75.86, 74.18, 75.09, 71.36, 90.01, 87.0, 87.0, 87.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_ISP' row_label='Greece Cleared Energy Up'
+         sample values (first 12): [75.76, 70.47, 52.3, 70.83, 75.86, 74.18, 75.09, 71.36, 90.01, 87.0, 87.0, 87.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_ISP' row_label='PROTERGIA_CC'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_Activated Energy' col='Unnamed: 22'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -205.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_Activated Energy' col='Unnamed: 23'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -200.0, 29.07]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_Activated Energy' col='Unnamed: 32'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 120.98, -187.63]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_Activated Energy' col='Unnamed: 64'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 44.0, -251.16]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_Activated Energy' col='Unnamed: 96'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -5.25]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_Activated Energy' row_label='THESSALONIKI_CC'
+         sample values (first 12): [128.0, 125.41, 125.88, 136.59, 77.45, 144.6, 145.0, 113.16, 128.0, 188.0, 188.0, 188.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_Activated Energy' row_label='PROTERGIA_CC'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_Activated Energy' row_label='SFIKIA'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_Activated Energy' row_label='Total Hydro activation'
+         sample values (first 12): [-4.73, -51.5, 4.14, 0.0, 0.0, 15.0, 0.78, 60.75, -46.94, -36.98, -36.95, -36.95]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 1'
+         sample values (first 12): [65.0, 65.0, 19.91, 12.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='FCR : ISP2_2026-02-16_20260215230006'
+         sample values (first 12): [65.0, 65.0, 19.91, 12.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 3'
+         sample values (first 12): [65.0, 65.0, 19.91, 12.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 4'
+         sample values (first 12): [65.0, 65.0, 19.9, 12.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 7'
+         sample values (first 12): [65.0, 65.0, 14.0, 9.45, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 13'
+         sample values (first 12): [65.0, 65.0, 9.91, 18.24, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='2026-02-16 00:00:00'
+         sample values (first 12): [65.0, 65.0, 9.91, 10.99, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 15'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 16'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 17'
+         sample values (first 12): [65.0, 65.0, 9.91, 12.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 18'
+         sample values (first 12): [65.0, 65.0, 9.91, 18.27, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 19'
+         sample values (first 12): [65.0, 65.0, 9.91, 12.24, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 20'
+         sample values (first 12): [65.0, 65.0, 9.91, 6.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 22'
+         sample values (first 12): [65.0, 65.0, 9.91, 16.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 23'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 25'
+         sample values (first 12): [65.0, 65.0, 19.91, 9.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 26'
+         sample values (first 12): [65.0, 65.0, 19.91, 9.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 27'
+         sample values (first 12): [65.0, 65.0, 19.91, 5.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 41'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 42'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 43'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 44'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 45'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 46'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 47'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 48'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 49'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 50'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 51'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 52'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 53'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 54'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 57'
+         sample values (first 12): [65.0, 65.0, 9.91, 101.72, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 58'
+         sample values (first 12): [65.0, 65.0, 9.91, 101.72, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 59'
+         sample values (first 12): [65.0, 65.0, 9.91, 101.72, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 60'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 65'
+         sample values (first 12): [65.0, 65.0, 49.92, 15.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_FCR' row_label='AG_NIKOLAOS2 Up'
+         sample values (first 12): [40.0, 40.0, 40.0, 40.0, 57.0, 57.0, 57.0, 57.0, 57.0, 57.0, 57.0, 57.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_FCR' row_label='AG_NIKOLAOS2 Down'
+         sample values (first 12): [57.0, 57.0, 57.0, 57.0, 57.0, 57.0, 40.0, 57.0, 57.0, 57.0, 57.0, 57.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 1'
+         sample values (first 12): [260.0, 120.0, 7.1, 9.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='aFRR : ISP2_2026-02-16_20260215230006'
+         sample values (first 12): [260.0, 120.0, 7.1, 8.96, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 3'
+         sample values (first 12): [260.0, 120.0, 7.1, 8.07, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 4'
+         sample values (first 12): [260.0, 120.0, 7.1, 8.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 5'
+         sample values (first 12): [260.0, 120.0, 7.1, 7.47, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 6'
+         sample values (first 12): [260.0, 120.0, 7.1, 8.75, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 7'
+         sample values (first 12): [260.0, 120.0, 7.1, 9.45, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 8'
+         sample values (first 12): [260.0, 120.0, 7.1, 8.7, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 9'
+         sample values (first 12): [260.0, 120.0, 15.0, 9.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 10'
+         sample values (first 12): [260.0, 120.0, 15.0, 12.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 11'
+         sample values (first 12): [260.0, 120.0, 15.0, 11.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 12'
+         sample values (first 12): [260.0, 120.0, 15.0, 9.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 13'
+         sample values (first 12): [260.0, 120.0, 7.1, 18.23, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='2026-02-16 00:00:00'
+         sample values (first 12): [260.0, 120.0, 7.1, 11.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 15'
+         sample values (first 12): [260.0, 120.0, 7.1, 9.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 16'
+         sample values (first 12): [260.0, 120.0, 7.1, 9.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 17'
+         sample values (first 12): [260.0, 120.0, 4.5, 12.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 18'
+         sample values (first 12): [260.0, 120.0, 4.5, 18.26, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 19'
+         sample values (first 12): [260.0, 120.0, 4.5, 12.23, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 20'
+         sample values (first 12): [260.0, 120.0, 12.9, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 21'
+         sample values (first 12): [260.0, 120.0, 9.89, 17.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 22'
+         sample values (first 12): [480.0, 120.0, 24.89, 17.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 24'
+         sample values (first 12): [740.0, 120.0, 24.89, 9.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 25'
+         sample values (first 12): [750.0, 120.0, 35.9, 17.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 26'
+         sample values (first 12): [750.0, 120.0, 24.89, 13.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 28'
+         sample values (first 12): [750.0, 120.0, 26.61, 3.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 29'
+         sample values (first 12): [750.0, 120.0, 26.7, 3.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 30'
+         sample values (first 12): [730.0, 120.0, 24.89, 3.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 31'
+         sample values (first 12): [710.0, 120.0, 26.61, 9.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 32'
+         sample values (first 12): [710.0, 120.0, 29.9, 9.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 33'
+         sample values (first 12): [660.0, 120.0, 44.06, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 35'
+         sample values (first 12): [630.0, 120.0, 58.52, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 38'
+         sample values (first 12): [650.0, 120.0, 51.5, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 56'
+         sample values (first 12): [670.0, 120.0, 51.35, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 61'
+         sample values (first 12): [620.0, 120.0, 58.26, 100.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 62'
+         sample values (first 12): [650.0, 120.0, 29.89, 19.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 63'
+         sample values (first 12): [660.0, 120.0, 29.89, 9.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 65'
+         sample values (first 12): [680.0, 130.0, 21.0, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 67'
+         sample values (first 12): [720.0, 130.0, 26.6, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 69'
+         sample values (first 12): [750.0, 130.0, 21.28, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 70'
+         sample values (first 12): [750.0, 130.0, 22.61, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 71'
+         sample values (first 12): [790.0, 130.0, 18.09, 1.89, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 72'
+         sample values (first 12): [790.0, 130.0, 26.6, 1.89, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 73'
+         sample values (first 12): [830.0, 130.0, 22.02, 1.89, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 74'
+         sample values (first 12): [830.0, 130.0, 24.57, 1.89, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 75'
+         sample values (first 12): [830.0, 130.0, 19.9, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 77'
+         sample values (first 12): [830.0, 130.0, 21.11, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 78'
+         sample values (first 12): [830.0, 130.0, 20.4, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 79'
+         sample values (first 12): [830.0, 130.0, 17.2, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 81'
+         sample values (first 12): [810.0, 130.0, 30.36, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 85'
+         sample values (first 12): [810.0, 130.0, 14.88, 2.21, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 86'
+         sample values (first 12): [810.0, 130.0, 25.0, 9.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 87'
+         sample values (first 12): [800.0, 130.0, 29.89, 3.62, 0.0, 0.0, 35.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 88'
+         sample values (first 12): [800.0, 130.0, 29.89, 9.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 90'
+         sample values (first 12): [780.0, 120.0, 29.89, 2.84, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 91'
+         sample values (first 12): [780.0, 120.0, 29.89, 9.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 92'
+         sample values (first 12): [780.0, 120.0, 25.0, 2.77, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 93'
+         sample values (first 12): [750.0, 120.0, 25.0, 3.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 94'
+         sample values (first 12): [750.0, 120.0, 29.89, 7.43, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 95'
+         sample values (first 12): [740.0, 120.0, 29.89, 7.43, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 96'
+         sample values (first 12): [740.0, 120.0, 29.89, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_aFRR' row_label='MEGALOPOLI_V Down'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_aFRR' row_label='HERON_CC Down'
+         sample values (first 12): [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_aFRR' row_label='THESSALONIKI_CC Up'
+         sample values (first 12): [40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_aFRR' row_label='THESSALONIKI_CC Down'
+         sample values (first 12): [0.0, 0.0, 80.0, 72.38, 80.0, 80.0, 0.0, 80.0, 0.0, 80.0, 80.0, 80.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_aFRR' row_label='AG_NIKOLAOS2 Down'
+         sample values (first 12): [120.0, 120.0, 40.0, 47.62, 40.0, 40.0, 120.0, 40.0, 120.0, 40.0, 40.0, 40.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_aFRR' row_label='Thermal Units UP Total'
+         sample values (first 12): [57.0, 57.0, 57.0, 57.0, 57.0, 57.0, 57.0, 57.0, 100.0, 100.0, 100.0, 100.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_aFRR' row_label='KASTRAKI Up'
+         sample values (first 12): [40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_aFRR' row_label='ILARIONAS Up'
+         sample values (first 12): [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 1'
+         sample values (first 12): [350.0, 230.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='mFRR : ISP2_2026-02-16_20260215230006'
+         sample values (first 12): [340.0, 230.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 3'
+         sample values (first 12): [340.0, 220.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 4'
+         sample values (first 12): [340.0, 220.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 5'
+         sample values (first 12): [330.0, 210.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 6'
+         sample values (first 12): [330.0, 210.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 7'
+         sample values (first 12): [330.0, 210.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 8'
+         sample values (first 12): [330.0, 200.0, 4.1, 5.98, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 9'
+         sample values (first 12): [320.0, 200.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 10'
+         sample values (first 12): [320.0, 190.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 11'
+         sample values (first 12): [320.0, 190.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 12'
+         sample values (first 12): [320.0, 190.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 13'
+         sample values (first 12): [320.0, 190.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='2026-02-16 00:00:00'
+         sample values (first 12): [320.0, 180.0, 4.1, 12.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 20'
+         sample values (first 12): [340.0, 180.0, 4.1, 4.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 22'
+         sample values (first 12): [530.0, 180.0, 6.3, 10.36, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 23'
+         sample values (first 12): [540.0, 180.0, 6.3, 7.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 25'
+         sample values (first 12): [780.0, 180.0, 18.9, 20.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 26'
+         sample values (first 12): [780.0, 180.0, 26.3, 7.8, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 32'
+         sample values (first 12): [750.0, 180.0, 14.89, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 37'
+         sample values (first 12): [700.0, 190.0, 25.3, 60.16, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 38'
+         sample values (first 12): [720.0, 190.0, 25.3, 20.0, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 41'
+         sample values (first 12): [710.0, 190.0, 24.8, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 42'
+         sample values (first 12): [720.0, 190.0, 24.8, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 43'
+         sample values (first 12): [710.0, 190.0, 24.8, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 44'
+         sample values (first 12): [710.0, 190.0, 24.8, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 45'
+         sample values (first 12): [710.0, 190.0, 24.0, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 46'
+         sample values (first 12): [700.0, 190.0, 24.0, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 47'
+         sample values (first 12): [710.0, 190.0, 24.0, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 48'
+         sample values (first 12): [710.0, 190.0, 24.0, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 49'
+         sample values (first 12): [700.0, 190.0, 24.0, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 50'
+         sample values (first 12): [700.0, 190.0, 24.0, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 51'
+         sample values (first 12): [710.0, 190.0, 24.0, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 52'
+         sample values (first 12): [720.0, 190.0, 24.0, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 53'
+         sample values (first 12): [730.0, 190.0, 24.8, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 54'
+         sample values (first 12): [730.0, 190.0, 24.8, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 55'
+         sample values (first 12): [730.0, 190.0, 24.4, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 56'
+         sample values (first 12): [770.0, 200.0, 24.8, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 57'
+         sample values (first 12): [730.0, 200.0, 24.0, 60.16, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 58'
+         sample values (first 12): [740.0, 200.0, 24.8, 60.16, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 59'
+         sample values (first 12): [750.0, 200.0, 24.8, 60.16, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 85'
+         sample values (first 12): [840.0, 220.0, 23.8, 2.08, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 86'
+         sample values (first 12): [840.0, 220.0, 23.4, 6.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 87'
+         sample values (first 12): [830.0, 220.0, 24.0, 3.25, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 88'
+         sample values (first 12): [830.0, 220.0, 25.3, 6.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 90'
+         sample values (first 12): [810.0, 220.0, 6.3, 2.52, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 93'
+         sample values (first 12): [780.0, 230.0, 6.3, 5.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 94'
+         sample values (first 12): [780.0, 230.0, 6.3, 6.17, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 95'
+         sample values (first 12): [780.0, 230.0, 5.4, 6.17, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 96'
+         sample values (first 12): [770.0, 230.0, 6.3, 7.41, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='Price Down'
+         sample values (first 12): [12.8, 12.8, 12.8, 12.8, 12.8, 12.8, 12.8, 5.98, 12.8, 12.8, 12.8, 12.8]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='THESSALONIKI_CC Up'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='THESSALONIKI_CC Down'
+         sample values (first 12): [120.0, 120.0, 82.0, 89.62, 62.0, 68.77, 120.0, 40.0, 120.0, 100.0, 100.0, 100.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='Thermal Units DOWN Total'
+         sample values (first 12): [120.0, 120.0, 82.0, 89.62, 62.0, 68.77, 120.0, 40.0, 120.0, 100.0, 100.0, 100.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='KASTRAKI Up'
+         sample values (first 12): [40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='SFIKIA Down'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='POURNARI1 Up'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+────────────────────────────────────────────────────────────
+FileCategory: ISP3ISPResults
+  [2026-02-17] 1 file(s)  keys=['file_path', 'file_description', 'file_process', 'file_datatype', 'file_coverageperiod', 'file_fromdate', 'file_todate', 'file_published']
+  [2026-02-17] downloading files/attached-files/type-file/2026/02/20260217_ISP3ISPResults_01.xlsx
+  [2026-02-17] 105,890 bytes
+  [2026-02-17] sheets: ['20260217_ISP', '20260217_Activated Energy', '20260217_CCGT Schedules', '20260217_FCR', '20260217_aFRR', '20260217_mFRR', '20260217_RR', '20260217_GenericConstraints']
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_ISP' col='Integrated Scheduling Process : ISP3_2026-02-17_20260217111033'
+         sample values (first 12): [6840.0, 119.0, 6959.0, 779.0, 5740.0, 1414.1, 819.0, 2233.1, 0.0, 0.0, 0.0, 1014.1]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_ISP' col='Unnamed: 3'
+         sample values (first 12): [6800.0, 118.0, 6918.0, 779.0, 5720.0, 1458.9, 819.0, 2277.9, 0.0, 0.0, -41.7, 1038.2]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_ISP' col='Unnamed: 5'
+         sample values (first 12): [6700.0, 115.0, 6815.0, 753.0, 5600.0, 1591.9, 921.11, 2513.01, 0.0, 0.0, 0.0, 1298.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_ISP' col='Unnamed: 7'
+         sample values (first 12): [6570.0, 114.0, 6684.0, 753.0, 5420.0, 1769.01, 793.0, 2562.01, 0.0, 0.0, 0.0, 1298.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_ISP' row_label='KREMASTA'
+         sample values (first 12): [200, 40, 40, 27, 40, 60, 40, 166, 176, 176, 176, 176]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 45'
+         sample values (first 12): [65.0, 65.0, 25.09, 10.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 46'
+         sample values (first 12): [65.0, 65.0, 25.09, 10.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 47'
+         sample values (first 12): [65.0, 65.0, 25.09, 10.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_FCR' col='Unnamed: 48'
+         sample values (first 12): [65.0, 65.0, 25.09, 10.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_FCR' row_label='AG_NIKOLAOS2 Down'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 17'
+         sample values (first 12): [630.0, 130.0, 25.41, 1.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 18'
+         sample values (first 12): [670.0, 130.0, 25.41, 1.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 19'
+         sample values (first 12): [680.0, 130.0, 25.41, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 20'
+         sample values (first 12): [690.0, 130.0, 25.31, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 21'
+         sample values (first 12): [750.0, 130.0, 25.31, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 22'
+         sample values (first 12): [750.0, 130.0, 25.31, 1.14, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 45'
+         sample values (first 12): [700.0, 120.0, 35.01, 10.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 46'
+         sample values (first 12): [700.0, 120.0, 35.01, 10.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 47'
+         sample values (first 12): [700.0, 120.0, 35.01, 10.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_aFRR' col='Unnamed: 48'
+         sample values (first 12): [690.0, 120.0, 35.01, 10.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_aFRR' row_label='MEGALOPOLI_V Up'
+         sample values (first 12): [125.0, 130.0, 175.0, 175.0, 169.0, 169.0, 175.0, 175.0, 175.0, 175.0, 175.0, 175.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_aFRR' row_label='THESSALONIKI_CC Up'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_aFRR' row_label='THESAVROS2 Up'
+         sample values (first 12): [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 1'
+         sample values (first 12): [680.0, 240.0, 23.8, 1.3, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 8'
+         sample values (first 12): [760.0, 240.0, 23.8, 55.67, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL column | sheet='20260217_mFRR' col='Unnamed: 42'
+         sample values (first 12): [820.0, 250.0, 26.3, 2.53, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_mFRR' row_label='Price Down'
+         sample values (first 12): [1.3, 23.71, 55.67, 55.67, 29.9, 29.9, 29.9, 55.67, 55.67, 55.67, 55.67, 55.67]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_mFRR' row_label='KREMASTA Up'
+         sample values (first 12): [40.0, 200.0, 200.0, 273.0, 200.0, 180.0, 200.0, 123.0, 123.0, 123.0, 123.0, 123.0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_mFRR' row_label='STRATOS1 Down'
+         sample values (first 12): [40, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  [2026-02-17] SCORE=50  PARTIAL row | sheet='20260217_mFRR' row_label='ILARIONAS Up'
+         sample values (first 12): [0, 0, 0, 0, 0, 0, 0, 40, 4, 4, 4, 4]
+  [2026-02-16] 1 file(s)  keys=['file_path', 'file_description', 'file_process', 'file_datatype', 'file_coverageperiod', 'file_fromdate', 'file_todate', 'file_published']
+  [2026-02-16] downloading files/attached-files/type-file/2026/02/20260216_ISP3ISPResults_01.xlsx
+  [2026-02-16] 106,370 bytes
+  [2026-02-16] sheets: ['20260216_ISP', '20260216_Activated Energy', '20260216_CCGT Schedules', '20260216_FCR', '20260216_aFRR', '20260216_mFRR', '20260216_RR', '20260216_GenericConstraints']
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_ISP' col='Unnamed: 16'
+         sample values (first 12): [5630.0, 107.0, 5737.0, 1529.0, 3846.0, 2428.9, 1709.0, 4137.9, 0.0, 0.0, -18.8, 2228.1]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_ISP' col='Unnamed: 45'
+         sample values (first 12): [4840.0, 113.0, 4953.0, 1364.0, 2959.0, 2369.0, 1593.0, 3962.0, 0.0, 0.0, 0.0, 1968.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_ISP' row_label='Cleared Energy Up'
+         sample values (first 12): [228.75, 228.75, 228.75, 228.75, 228.75, 220.66, 201.25, 165.49, 157.5, 150.0, 148.75, 138.7]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_ISP' row_label='Greece Cleared Energy Up'
+         sample values (first 12): [228.75, 228.75, 228.75, 228.75, 228.75, 220.66, 201.25, 165.49, 157.5, 150.0, 148.75, 138.7]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_ISP' row_label='PROTERGIA_CC'
+         sample values (first 12): [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_Activated Energy' col='Unnamed: 16'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 85.0, 0.0, 0.0, 44.0, -218.16]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_Activated Energy' col='Unnamed: 47'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -66.07]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_Activated Energy' col='Unnamed: 48'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 45.99, -380.06]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_Activated Energy' row_label='PROTERGIA_CC'
+         sample values (first 12): [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_Activated Energy' row_label='AG_NIKOLAOS2'
+         sample values (first 12): [334.0, 334.0, 334.0, 334.0, 265.0, 250.0, 248.0, 102.96, 137.0, 134.0, 168.0, 174.8]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_Activated Energy' row_label='SFIKIA'
+         sample values (first 12): [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 1'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='FCR : ISP3_2026-02-16_20260216110839'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 3'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 4'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 5'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 6'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 9'
+         sample values (first 12): [65.0, 65.0, 9.91, 101.72, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 10'
+         sample values (first 12): [65.0, 65.0, 9.91, 101.72, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 11'
+         sample values (first 12): [65.0, 65.0, 9.91, 101.72, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 12'
+         sample values (first 12): [65.0, 65.0, 9.91, 9.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_FCR' col='Unnamed: 48'
+         sample values (first 12): [65.0, 65.0, 10.85, 11.09, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_FCR' row_label='AG_NIKOLAOS2 Up'
+         sample values (first 12): [40, 40, 40, 40, 41, 40, 57, 57, 40, 40, 40, 40]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_FCR' row_label='AG_NIKOLAOS2 Down'
+         sample values (first 12): [34, 34, 34, 34, 40, 40, 35, 36, 0, 0, 0, 57]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 8'
+         sample values (first 12): [670.0, 120.0, 51.35, 9.9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 13'
+         sample values (first 12): [620.0, 120.0, 58.26, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='2026-02-16 00:00:00'
+         sample values (first 12): [650.0, 120.0, 29.9, 10.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 15'
+         sample values (first 12): [660.0, 120.0, 33.33, 10.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 17'
+         sample values (first 12): [680.0, 130.0, 29.9, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 19'
+         sample values (first 12): [720.0, 130.0, 21.28, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 21'
+         sample values (first 12): [750.0, 130.0, 21.28, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 22'
+         sample values (first 12): [750.0, 130.0, 26.6, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 23'
+         sample values (first 12): [790.0, 130.0, 26.6, 1.9, 0.0, 0.0, 13.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 24'
+         sample values (first 12): [790.0, 130.0, 26.6, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 25'
+         sample values (first 12): [830.0, 130.0, 21.62, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 26'
+         sample values (first 12): [830.0, 130.0, 22.87, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 27'
+         sample values (first 12): [830.0, 130.0, 21.11, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 28'
+         sample values (first 12): [830.0, 130.0, 17.2, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 29'
+         sample values (first 12): [830.0, 130.0, 17.2, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 30'
+         sample values (first 12): [830.0, 130.0, 17.2, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 31'
+         sample values (first 12): [830.0, 130.0, 17.2, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 32'
+         sample values (first 12): [830.0, 130.0, 17.2, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 33'
+         sample values (first 12): [810.0, 130.0, 30.36, 1.91, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 37'
+         sample values (first 12): [810.0, 130.0, 14.88, 2.21, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 38'
+         sample values (first 12): [810.0, 130.0, 25.0, 9.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 39'
+         sample values (first 12): [800.0, 130.0, 29.89, 3.62, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 40'
+         sample values (first 12): [800.0, 130.0, 25.0, 9.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 42'
+         sample values (first 12): [780.0, 120.0, 29.89, 2.84, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 43'
+         sample values (first 12): [780.0, 120.0, 29.89, 8.94, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 44'
+         sample values (first 12): [780.0, 120.0, 25.0, 2.77, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 45'
+         sample values (first 12): [750.0, 120.0, 25.0, 4.05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 46'
+         sample values (first 12): [750.0, 120.0, 25.0, 7.43, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 47'
+         sample values (first 12): [740.0, 120.0, 29.89, 7.43, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_aFRR' col='Unnamed: 48'
+         sample values (first 12): [740.0, 120.0, 29.89, 9.63, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_aFRR' row_label='THESSALONIKI_CC Up'
+         sample values (first 12): [80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_aFRR' row_label='THESSALONIKI_CC Down'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 48.0, 48.0, 45.0, 45.0, 45.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_aFRR' row_label='KASTRAKI Up'
+         sample values (first 12): [48, 48, 48, 68, 80, 80, 80, 80, 122, 129, 131, 170]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_aFRR' row_label='ILARIONAS Up'
+         sample values (first 12): [0, 0, 0, 0, 60, 60, 0, 40, 4, 4, 4, 4]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 1'
+         sample values (first 12): [700.0, 190.0, 24.0, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='mFRR : ISP3_2026-02-16_20260216110839'
+         sample values (first 12): [700.0, 190.0, 24.0, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 3'
+         sample values (first 12): [710.0, 190.0, 24.0, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 4'
+         sample values (first 12): [720.0, 190.0, 24.0, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 5'
+         sample values (first 12): [730.0, 190.0, 24.8, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 6'
+         sample values (first 12): [730.0, 190.0, 24.8, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 7'
+         sample values (first 12): [730.0, 190.0, 24.4, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 8'
+         sample values (first 12): [770.0, 200.0, 24.8, 60.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 9'
+         sample values (first 12): [730.0, 200.0, 24.0, 60.16, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 10'
+         sample values (first 12): [740.0, 200.0, 24.4, 60.16, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 11'
+         sample values (first 12): [750.0, 200.0, 24.8, 60.16, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 37'
+         sample values (first 12): [840.0, 220.0, 25.0, 2.08, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 38'
+         sample values (first 12): [840.0, 220.0, 25.0, 6.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 39'
+         sample values (first 12): [830.0, 220.0, 24.0, 3.25, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 40'
+         sample values (first 12): [830.0, 220.0, 25.0, 6.17, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 42'
+         sample values (first 12): [810.0, 220.0, 13.3, 2.52, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 45'
+         sample values (first 12): [780.0, 230.0, 6.3, 5.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 46'
+         sample values (first 12): [780.0, 230.0, 6.3, 6.17, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 47'
+         sample values (first 12): [780.0, 230.0, 6.3, 6.17, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL column | sheet='20260216_mFRR' col='Unnamed: 48'
+         sample values (first 12): [770.0, 230.0, 6.3, 7.41, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='Price Down'
+         sample values (first 12): [60.17, 60.17, 60.17, 60.17, 60.17, 60.17, 60.17, 60.17, 60.16, 60.16, 60.16, 10.51]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='THESSALONIKI_CC Up'
+         sample values (first 12): [40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='THESSALONIKI_CC Down'
+         sample values (first 12): [40, 40, 40, 40, 47, 40, 40, 40, 0, 0, 0, 0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='KASTRAKI Up'
+         sample values (first 12): [170.0, 170.0, 170.0, 170.0, 170.0, 170.0, 170.0, 170.0, 128.0, 121.0, 119.0, 80.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='SFIKIA Down'
+         sample values (first 12): [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  [2026-02-16] SCORE=50  PARTIAL row | sheet='20260216_mFRR' row_label='Hydro Units DOWN Total'
+         sample values (first 12): [27.0, 27.0, 27.0, 27.0, 39.0, 56.34, 47.0, 25.04, 17.0, 17.0, 17.0, 34.0]
+
+────────────────────────────────────────────────────────────
+FileCategory: ISP4ISPResults
+  [2026-02-17] empty list
+  [2026-02-16] empty list
+
+────────────────────────────────────────────────────────────
+FileCategory: ISP1DayAheadSchedulingResults
+  [2026-02-17] empty list
+  [2026-02-16] empty list
+
+────────────────────────────────────────────────────────────
+FileCategory: ISP2DayAheadSchedulingResults
+  [2026-02-17] empty list
+  [2026-02-16] empty list
+
+────────────────────────────────────────────────────────────
+FileCategory: DASPResults
+  [2026-02-17] empty list
+  [2026-02-16] empty list
+
+────────────────────────────────────────────────────────────
+FileCategory: ISPResults
+  [2026-02-17] empty list
+  [2026-02-16] empty list
+
+────────────────────────────────────────────────────────────
+FileCategory: ISP1MarketResults
+  [2026-02-17] empty list
+  [2026-02-16] empty list
+
+────────────────────────────────────────────────────────────
+FileCategory: ISP2MarketResults
+  [2026-02-17] empty list
+  [2026-02-16] empty list
+
+────────────────────────────────────────────────────────────
+FileCategory: MarketResults
+  [2026-02-17] empty list
+  [2026-02-16] empty list
+
+────────────────────────────────────────────────────────────
+FileCategory: SMPResults
+  [2026-02-17] empty list
+  [2026-02-16] empty list
+
+────────────────────────────────────────────────────────────
+FileCategory: EnergyPrices
+  [2026-02-17] empty list
+  [2026-02-16] empty list
+
+────────────────────────────────────────────────────────────
+FileCategory: DayAheadResults
+  [2026-02-17] empty list
+  [2026-02-16] empty list
+
+────────────────────────────────────────────────────────────
+FileCategory: IntraDayResults
+  [2026-02-17] empty list
+  [2026-02-16] empty list
+
+────────────────────────────────────────────────────────────
+FileCategory: BalancingResults
+  [2026-02-17] empty list
+  [2026-02-16] empty list
+
+────────────────────────────────────────────────────────────
+FileCategory: ImbalancePrices
+  [2026-02-17] empty list
+  [2026-02-16] empty list
+
+────────────────────────────────────────────────────────────
+FileCategory: ISP1ImbalanceResults
+  [2026-02-17] empty list
+  [2026-02-16] empty list
+
+────────────────────────────────────────────────────────────
+FileCategory: ISP2ImbalanceResults
+  [2026-02-17] empty list
+  [2026-02-16] empty list
+
+────────────────────────────────────────────────────────────
+FileCategory: ISPImbalancePrices
+  [2026-02-17] empty list
+  [2026-02-16] empty list
+
+────────────────────────────────────────────────────────────
+FileCategory: ISP1ActivatedEnergy
+  [2026-02-17] empty list
+  [2026-02-16] empty list
+
+────────────────────────────────────────────────────────────
+FileCategory: RealTimeSchedulingResults
+  [2026-02-17] empty list
+  [2026-02-16] empty list
+
+======================================================================
+WINNERS  (score=100, both 2.57 AND 39.96 found):
+======================================================================
+
+  FileCategory : ISP1ISPResults
+  Date used    : 2026-02-16
+  Match        : COLUMN format | sheet='20260216_Activated Energy' col='Unnamed: 24'
+  Values[0:12] : [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -110.0, 37.17]
+  File URL     : https://www.admie.gr/sites/default/files/attached-files/type-file/2026/02/20260216_ISP1ISPResults_01.xlsx
+  Period alignment at offset 32: [2.6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  ENTSO-E ref:                         [2.57, 0.01, 0.01, 0.01, 0.01, 0.01, 39.96]
+  Matching periods: 6/7
+
+  FileCategory : ISP1ISPResults
+  Date used    : 2026-02-16
+  Match        : COLUMN format | sheet='20260216_aFRR' col='Unnamed: 92'
+  Values[0:12] : [780.0, 120.0, 25.0, 5.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  File URL     : https://www.admie.gr/sites/default/files/attached-files/type-file/2026/02/20260216_ISP1ISPResults_01.xlsx
+  Period alignment at offset 17: [2.52, 100.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  ENTSO-E ref:                         [2.57, 0.01, 0.01, 0.01, 0.01, 0.01, 39.96]
+  Matching periods: 5/7
+
+  FileCategory : ISP1ISPResults
+  Date used    : 2026-02-16
+  Match        : ROW format | sheet='20260216_aFRR' row_label='THESSALONIKI_CC Down'
+  Values[0:12] : [0.0, 0.0, 42.0, 42.0, 80.0, 60.0, 80.0, 60.0, 0.0, 80.0, 80.0, 80.0]
+  File URL     : https://www.admie.gr/sites/default/files/attached-files/type-file/2026/02/20260216_ISP1ISPResults_01.xlsx
+
+  FileCategory : ISP1ISPResults
+  Date used    : 2026-02-16
+  Match        : COLUMN format | sheet='20260216_mFRR' col='Unnamed: 24'
+  Values[0:12] : [780.0, 180.0, 13.3, 7.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  File URL     : https://www.admie.gr/sites/default/files/attached-files/type-file/2026/02/20260216_ISP1ISPResults_01.xlsx
+  Period alignment at offset 68: [2.6, 100.0, 0.0, 0.0, 185.0, 0.0, 0.0]
+  ENTSO-E ref:                         [2.57, 0.01, 0.01, 0.01, 0.01, 0.01, 39.96]
+  Matching periods: 4/7
+
+  FileCategory : ISP2ISPResults
+  Date used    : 2026-02-16
+  Match        : COLUMN format | sheet='20260216_mFRR' col='Unnamed: 24'
+  Values[0:12] : [780.0, 180.0, 31.0, 7.8, 0.0, 0.0, 0.0, 0.0, 30.0, 0.0, 0.0, 0.0]
+  File URL     : https://www.admie.gr/sites/default/files/attached-files/type-file/2026/02/20260216_ISP2ISPResults_01.xlsx
+  Period alignment at offset 68: [2.6, 100.0, 0.4, 25.6, 134.4, 0.0, 0.0]
+  ENTSO-E ref:                         [2.57, 0.01, 0.01, 0.01, 0.01, 0.01, 39.96]
+  Matching periods: 3/7
+
+======================================================================
+Done.
+======================================================================
