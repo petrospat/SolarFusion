@@ -6,20 +6,25 @@
 #   Soiling Optimisation
 
 import io
+import os
+import glob
 import time
 import random
 import calendar
 import sqlite3
 import urllib3
 import warnings
+import concurrent.futures
 from datetime import datetime, timezone, date, timedelta
 from typing import Tuple, List, Optional, Dict
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
 import requests
 import streamlit as st
 import plotly.graph_objects as go
+import openpyxl
 from plotly.subplots import make_subplots
 
 warnings.filterwarnings("ignore")
@@ -39,8 +44,8 @@ st.set_page_config(
 # PLANT CONSTANTS  ← configure these for your site
 # ─────────────────────────────────────────────────────────────────────────────
 PLANT_TZ          = "Europe/Athens"
-PLANT_START_YEAR  = 2025          # COD year
-PLANT_PEAK_KW     = 1100.0        # Installed DC capacity (kWp)
+PLANT_START_YEAR  = 2023          # COD year
+PLANT_PEAK_KW     = 1000.0        # Installed DC capacity (kWp)
 GAMMA             = -0.0035       # Temperature coefficient (%/°C) — typical mono-PERC
 NOCT              = 45.0          # Nominal Operating Cell Temperature (°C)
 INV_DEV_TYPE_IDS  = [1, 38, 39]   # Huawei device type IDs for inverters
@@ -66,7 +71,26 @@ T_AMB     = {1:4.5,2:5.8,3:9.3,4:14.6,5:20.1,6:25.2,
 MONTH_LABELS = ["Jan","Feb","Mar","Apr","May","Jun",
                 "Jul","Aug","Sep","Oct","Nov","Dec"]
 PALETTE      = ["#f0b429","#3ecfcf","#60a5fa","#a78bfa","#fb923c","#34d399","#f472b6"]
-ADMIE_API    = "https://www.admie.gr/getOperationMarketFile"
+ENTSOE_API   = "https://web-api.tp.entsoe.eu/api"   # SMP source
+ENTSOE_ZONE  = "10YGR-HTSO-----Y"                   # Greece bidding zone EIC
+
+# Shared, connection-pooled session for ENTSO-E requests. Reused across the
+# parallel batch fetches so repeated calls don't each pay a fresh TLS handshake.
+_ENTSOE_SESSION = requests.Session()
+_ENTSOE_SESSION.mount("https://", requests.adapters.HTTPAdapter(pool_maxsize=10))
+
+
+def _get_proxies() -> Optional[dict]:
+    """Read proxy from secrets.toml [proxy] section or fall back to env vars."""
+    try:
+        p = st.secrets["proxy"]["https"]
+        if p:
+            if not p.startswith("http"):
+                p = "http://" + p
+            return {"https": p, "http": p}
+    except Exception:
+        pass
+    return None
 
 # Failure-predictor telemetry signals and their warning thresholds
 FAILURE_SIGNALS = {
@@ -76,6 +100,14 @@ FAILURE_SIGNALS = {
     "dataItemMap.elec_freq":    {"label":"Grid Frequency (Hz)",   "warn":49.8,  "crit":49.5,  "unit":"Hz",   "color":"#a78bfa"},
     "dataItemMap.active_power": {"label":"AC Power (kW)",         "warn":None,  "crit":None,  "unit":"kW",   "color":"#f0b429"},
 }
+
+# FusionSolar device-alarm severity codes (getAlarmList "lev" field).
+# Huawei's Northbound API returns these as small ints; map to labels/colors
+# for display. Unrecognised codes fall back to "Unknown" rather than erroring.
+ALARM_LEVEL_MAP = {1:"Critical", 2:"Major", 3:"Minor", 4:"Warning"}
+ALARM_LEVEL_COLOR = {"Critical":"#ff5f5f", "Major":"#fb923c", "Minor":"#f0b429",
+                     "Warning":"#60a5fa", "Unknown":"#94a3b8"}
+ALARM_LEVEL_ORDER = ["Critical","Major","Minor","Warning","Unknown"]
 
 # ─────────────────────────────────────────────────────────────────────────────
 # THEME HELPERS
@@ -116,10 +148,12 @@ def _dual_layout(fig, title="", left_title="", right_title="",
     fig.update_layout(**kw)
     fig.update_xaxes(gridcolor=_GRD, zerolinecolor=_GRD, tickformat="%H:%M")
     fig.update_yaxes(title_text=left_title, gridcolor=_GRD, zerolinecolor=_GRD,
+                     rangemode="tozero",
                      title_font=dict(color=left_color),
                      tickfont=dict(color=left_color), secondary_y=False)
     fig.update_yaxes(title_text=right_title, gridcolor="rgba(0,0,0,0)",
                      zerolinecolor=_GRD,
+                     rangemode="tozero",
                      title_font=dict(color=right_color),
                      tickfont=dict(color=right_color), secondary_y=True)
     return fig
@@ -128,6 +162,69 @@ def _dual_layout(fig, title="", left_title="", right_title="",
 # SQLITE  — alerts, opex, downtime, cleaning events
 # ─────────────────────────────────────────────────────────────────────────────
 DB_PATH = "apm_data.db"
+
+# Locally exported per-inverter Huawei Excel files (com1-1/2/3), genuinely
+# native 15-min resolution. Preferred over the live FusionSolar API for the
+# Intraday tab wherever a day is covered: getKpiStation5min doesn't exist
+# for this account (confirmed HTTP 404, not a rate limit — so the live API
+# path can never return better than hourly), and getKpiStationHour itself is
+# frequently rate-limited (failCode=407) on top of that.
+LOCAL_PROD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                 "..", "Historical prod data 25-26")
+
+
+@st.cache_data(show_spinner=False)
+def _load_local_inverter_production() -> pd.DataFrame:
+    """Sum of com1-1/com1-2/com1-3 Active power(kW) at every 15-min
+    timestamp found in the local exports. Returns DataFrame[dt, kw_sum]
+    (dt tz-aware, Europe/Athens) — empty if no files are present.
+
+    File quirk: these exports don't declare a valid <dimension> in their
+    sheet XML, so openpyxl's read_only max_row inference reports 1 unless
+    max_row is forced higher than the true data (iter_rows below).
+
+    Start-Time convention: "YYYY-MM-DD HH:MM:SS DST" during EEST months,
+    plain "YYYY-MM-DD HH:MM:SS" (EET) otherwise — Huawei's own resolved
+    local time, used directly via tz_localize(ambiguous=...) rather than
+    re-deriving DST from the naive timestamp.
+    """
+    files = sorted(glob.glob(os.path.join(LOCAL_PROD_FOLDER, "Inverter_*.xlsx")))
+    if not files:
+        return pd.DataFrame(columns=["dt", "kw_sum"])
+    ts_list, dst_list, kw_list = [], [], []
+    for fp in files:
+        wb = openpyxl.load_workbook(fp, data_only=True, read_only=True)
+        ws = wb[wb.sheetnames[0]]
+        for row in ws.iter_rows(min_row=5, max_row=200000, max_col=8, values_only=True):
+            start_time, power = row[3], row[4]
+            if not start_time or power is None:
+                continue
+            is_dst = start_time.endswith(" DST")
+            ts_list.append(start_time[:-4] if is_dst else start_time)
+            dst_list.append(is_dst)
+            kw_list.append(float(power))
+        wb.close()
+    df = pd.DataFrame({"ts_str": ts_list, "is_dst": dst_list, "kw": kw_list})
+    naive = pd.to_datetime(df["ts_str"], format="%Y-%m-%d %H:%M:%S")
+    df["dt"] = naive.dt.tz_localize(PLANT_TZ, ambiguous=df["is_dst"].to_numpy(),
+                                    nonexistent="shift_forward")
+    return (df.groupby("dt")["kw"].sum().reset_index()
+           .rename(columns={"kw": "kw_sum"}).sort_values("dt").reset_index(drop=True))
+
+
+def _local_prod_json_for_day(target_date: date) -> Optional[dict]:
+    """Builds the same {"data": [...], "_src": ...} shape api_15min() returns,
+    from local Excel data, so the rest of the Intraday tab (and
+    _compute_day_revenue_from_frames) doesn't need to know the source."""
+    site = _load_local_inverter_production()
+    if site.empty:
+        return None
+    day_df = site[site["dt"].dt.date == target_date]
+    if day_df.empty:
+        return None
+    rows = [{"collectTime": int(dt.tz_convert("UTC").timestamp() * 1000),
+            "active_power": float(kw)} for dt, kw in zip(day_df["dt"], day_df["kw_sum"])]
+    return {"data": rows, "_src": "15min"}
 
 def _get_db():
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
@@ -149,10 +246,34 @@ def _get_db():
     conn.execute("""CREATE TABLE IF NOT EXISTS telemetry_history(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         ts TEXT, inverter_id TEXT, signal TEXT, value REAL)""")
-    # Price cache: persists last-fetched DAM prices so stale data can be shown
-    # when ADMIE is temporarily unreachable
+    # Daily revenue log: stores per-day revenue from intraday 15-min calculation
+    conn.execute("""CREATE TABLE IF NOT EXISTS daily_revenue(
+        day TEXT PRIMARY KEY,
+        kwh REAL, revenue_eur REAL, avg_price REAL, fetched_ts TEXT)""")
+    # 15-min revenue timeseries: one row per 15-min bucket — generation,
+    # ENTSO-E price, and revenue for that interval. This is the granular
+    # source daily_revenue is aggregated from.
+    conn.execute("""CREATE TABLE IF NOT EXISTS revenue_15min(
+        dt TEXT PRIMARY KEY,
+        day TEXT, kwh REAL, price_eur_mwh REAL, revenue_eur REAL, fetched_ts TEXT)""")
+    conn.execute("""CREATE INDEX IF NOT EXISTS idx_revenue_15min_day
+        ON revenue_15min(day)""")
+    # Price cache: persists last-fetched DAM prices for offline fallback
     conn.execute("""CREATE TABLE IF NOT EXISTS price_cache(
         ym TEXT PRIMARY KEY, avg_price_eur_mwh REAL, fetched_ts TEXT)""")
+    # Durable DAM price journal: every 15-min/hourly price ever successfully
+    # fetched from ENTSO-E, kept permanently (not just this session/day). When
+    # a live ENTSO-E pull fails, this is what lets the app serve the last
+    # known-good value for that exact timestamp instead of erroring out —
+    # there is no free public secondary live source for Greek DAM prices
+    # (IPTO only publishes grid-operation data; the exchange's own API is a
+    # certified-trading-member-only order-execution interface), so a durable
+    # local cache is the realistic fallback rather than a second live API.
+    conn.execute("""CREATE TABLE IF NOT EXISTS dam_prices(
+        timestamp_utc TEXT NOT NULL, bidding_zone TEXT NOT NULL,
+        price_eur_mwh REAL, resolution_min INTEGER,
+        source TEXT NOT NULL, fetched_ts TEXT NOT NULL,
+        PRIMARY KEY (timestamp_utc, bidding_zone))""")
     conn.commit()
     return conn
 
@@ -195,141 +316,180 @@ def _get_cached_dam_price(ym: str) -> Optional[float]:
     return row[0] if row else None
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# IPTO / ADMIE CONNECTIVITY DIAGNOSTICS
-# ─────────────────────────────────────────────────────────────────────────────
-def _classify_admie_error(exc: Exception) -> Tuple[str, str]:
+def _persist_dam_prices(df: pd.DataFrame, resolution_min: int, source: str = "ENTSOE") -> None:
     """
-    Return (error_type, user_message) from an exception raised by an ADMIE call.
-    Distinguishes network-level failures from application-level ones.
+    Durably journal a batch of [dt, price] rows (any tz — converted to UTC
+    here) into dam_prices. No Streamlit calls — safe from worker threads.
+    ON CONFLICT policy mirrors the source-priority pattern used elsewhere in
+    this app: 'ENTSOE' always overwrites (it's the live/authoritative pull);
+    anything else only fills a slot that's genuinely empty, so a fallback
+    read never silently degrades an already-good value.
     """
-    msg = str(exc)
-    if "NameResolution" in msg or "Failed to resolve" in msg or "Name or service" in msg:
-        return ("DNS_FAILURE",
-                "❌ **DNS failure** — cannot resolve `www.admie.gr`. "
-                "Your deployment server's outbound DNS/firewall is blocking the connection. "
-                "Check that `www.admie.gr` (port 443) is whitelisted.")
-    if "ConnectionRefused" in msg or "Connection refused" in msg:
-        return ("CONN_REFUSED",
-                "❌ **Connection refused** — `admie.gr` is actively rejecting connections. "
-                "May be a temporary outage or IP block.")
-    if "timed out" in msg.lower() or "Timeout" in msg:
-        return ("TIMEOUT",
-                "⏱️ **Timeout** — `admie.gr` did not respond within the timeout window. "
-                "Try increasing the timeout or retry later.")
-    if "SSLError" in msg or "SSL" in msg:
-        return ("SSL_ERROR",
-                "🔒 **SSL/TLS error** — certificate validation failed. "
-                "Try setting `verify=False` (already set) or check system CA bundle.")
-    if "Max retries" in msg:
-        return ("MAX_RETRIES",
-                "🔄 **Max retries exceeded** — usually wraps a DNS or connection failure. "
-                "Check egress proxy and firewall rules for `admie.gr:443`.")
-    return ("UNKNOWN", f"❓ Unknown error: `{msg[:200]}`")
+    if df.empty:
+        return
+    fetched_ts = datetime.now(timezone.utc).isoformat()
+    rows = [
+        (pd.Timestamp(r.dt).tz_convert("UTC").isoformat(), ENTSOE_ZONE,
+         float(r.price), resolution_min, source, fetched_ts)
+        for r in df.itertuples(index=False) if pd.notna(r.price)
+    ]
+    if not rows:
+        return
+    conn = _get_db()
+    conn.executemany("""
+        INSERT INTO dam_prices
+            (timestamp_utc, bidding_zone, price_eur_mwh, resolution_min, source, fetched_ts)
+        VALUES (?,?,?,?,?,?)
+        ON CONFLICT(timestamp_utc, bidding_zone) DO UPDATE SET
+            price_eur_mwh  = CASE WHEN excluded.source='ENTSOE' THEN excluded.price_eur_mwh
+                                  WHEN dam_prices.price_eur_mwh IS NULL THEN excluded.price_eur_mwh
+                                  ELSE dam_prices.price_eur_mwh END,
+            resolution_min = CASE WHEN excluded.source='ENTSOE' THEN excluded.resolution_min
+                                  WHEN dam_prices.price_eur_mwh IS NULL THEN excluded.resolution_min
+                                  ELSE dam_prices.resolution_min END,
+            source         = CASE WHEN excluded.source='ENTSOE' THEN excluded.source
+                                  WHEN dam_prices.price_eur_mwh IS NULL THEN excluded.source
+                                  ELSE dam_prices.source END,
+            fetched_ts     = CASE WHEN excluded.source='ENTSOE' THEN excluded.fetched_ts
+                                  WHEN dam_prices.price_eur_mwh IS NULL THEN excluded.fetched_ts
+                                  ELSE dam_prices.fetched_ts END
+    """, rows)
+    conn.commit(); conn.close()
 
 
-def probe_admie(timeout: int = 8) -> dict:
+def _read_cached_dam_prices(target_date: date) -> pd.DataFrame:
     """
-    Run a live connectivity probe of the ADMIE API and return a detailed
-    diagnostic report dict.
-    Tests both DAM_ResultsSummary (legacy column format) and
-    ISP1ISPResults (current transposed row format).
+    Read back a day's durably-journaled DAM prices (whatever source last
+    filled each slot), shaped to match _fetch_dam_daily_uncached's normal
+    return: DataFrame[dt, price, _src] in PLANT_TZ. Empty if nothing was
+    ever successfully cached for this day.
     """
+    day_start = datetime(target_date.year, target_date.month, target_date.day, tzinfo=timezone.utc)
+    day_end = day_start + timedelta(days=1)
+    conn = _get_db()
+    df = pd.read_sql_query(
+        """SELECT timestamp_utc, price_eur_mwh, source FROM dam_prices
+           WHERE bidding_zone=? AND timestamp_utc>=? AND timestamp_utc<?
+           ORDER BY timestamp_utc""",
+        conn, params=(ENTSOE_ZONE, day_start.isoformat(), day_end.isoformat()))
+    conn.close()
+    if df.empty:
+        return pd.DataFrame(columns=["dt", "price", "_src"])
+    df["dt"]    = pd.to_datetime(df["timestamp_utc"], utc=True).dt.tz_convert(PLANT_TZ)
+    df["price"] = df["price_eur_mwh"]
+    df["_src"]  = "local-cache:" + df["source"]
+    return df[["dt", "price", "_src"]].sort_values("dt").reset_index(drop=True)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ENTSO-E CONNECTIVITY PROBE
+# ─────────────────────────────────────────────────────────────────────────────
+def probe_entsoe(timeout: int = 10) -> dict:
+    """Test ENTSO-E API connectivity and return a diagnostic result dict."""
     result = dict(reachable=False, status_code=None, error_type=None,
-                  user_message=None, file_url_found=False,
-                  price_parseable=False, sample_price=None,
-                  json_keys=None, n_files=0, working_format=None)
+                  user_message=None, price_parseable=False,
+                  sample_price=None, n_periods=0)
 
-    # Use a date 3 days ago to ensure files exist (ISP published D-1 ~19:00 EET)
-    test_date = date.today() - timedelta(days=3)
-    ds = test_date.strftime("%Y-%m-%d")
-
-    # Step 1 — basic reachability
-    try:
-        r0 = requests.get("https://www.admie.gr/", timeout=timeout, verify=False)
-        result["status_code"] = r0.status_code
-        deny = r0.headers.get("x-deny-reason")
-        if deny:
-            result["error_type"] = "PROXY_BLOCKED"
-            result["user_message"] = (
-                f"🚫 **Egress proxy blocked** — `x-deny-reason: {deny}`. "
-                "Add `admie.gr` to your network allowlist.")
-            return result
-        result["reachable"] = True
-    except Exception as e:
-        et, um = _classify_admie_error(e)
-        result["error_type"] = et
-        result["user_message"] = um
+    token = _get_entsoe_token()
+    if not token:
+        result["error_type"] = "NO_TOKEN"
+        result["user_message"] = (
+            "⚠️ **No ENTSO-E API token configured.**\n\n"
+            "Add to `.streamlit/secrets.toml`:\n"
+            "```toml\n[entsoe]\napi_key = \"your-token-here\"\n```\n"
+            "Register free at [transparency.entsoe.eu](https://transparency.entsoe.eu)")
         return result
 
-    # Step 2 — probe each FileCategory
-    for fc in ["DAM_ResultsSummary", "ISP1ISPResults"]:
+    test_date    = date.today() - timedelta(days=1)
+    period_start = datetime(test_date.year, test_date.month,
+                            test_date.day, 0, 0, tzinfo=timezone.utc)
+    period_end   = period_start + timedelta(days=1)
+
+    # Greece Day-Ahead prices may use A01 or A16 — try both
+    for process_type in ["A01", "A16"]:
+        params = {
+            "securityToken": token,
+            "documentType":  "A44",
+            "processType":   process_type,
+            "in_Domain":     ENTSOE_ZONE,
+            "out_Domain":    ENTSOE_ZONE,
+            "periodStart":   period_start.strftime("%Y%m%d%H%M"),
+            "periodEnd":     period_end.strftime("%Y%m%d%H%M"),
+        }
         try:
-            r = requests.get(ADMIE_API,
-                params={"dateStart": ds, "dateEnd": ds, "FileCategory": fc},
-                timeout=timeout, verify=False)
+            r = requests.get(ENTSOE_API, params=params, timeout=timeout,
+                             proxies=_get_proxies(), verify=False)
+            result["status_code"] = r.status_code
+            result["reachable"]   = True
+
+            if r.status_code == 401:
+                result["error_type"]   = "INVALID_TOKEN"
+                result["user_message"] = (
+                    "❌ **401 Unauthorised** — token invalid or expired. "
+                    "Regenerate at transparency.entsoe.eu and update secrets.toml.")
+                return result
+
             if r.status_code != 200:
-                continue
-            j = r.json()
-            if not j:
-                continue   # empty list — no files for this date in this category
-            result["n_files"] = len(j) if isinstance(j, list) else 1
-            if isinstance(j, list) and j and isinstance(j[0], dict):
-                result["json_keys"] = list(j[0].keys())
-
-            furl = _extract_url_from_entry(j[-1] if isinstance(j, list) else j)
-            if not furl:
-                result["error_type"] = "NO_FILE_URL"
-                result["user_message"] = (
-                    f"⚠️ `{fc}` returned {result['n_files']} entries but no URL "
-                    f"could be extracted. Keys seen: `{result['json_keys']}`")
+                result["error_type"]   = "HTTP_ERROR"
+                result["user_message"] = f"⚠️ ENTSO-E returned HTTP {r.status_code}"
                 continue
 
-            result["file_url_found"] = True
-            fd = requests.get(furl, timeout=25, verify=False)
-            if fd.status_code != 200:
-                result["error_type"] = "FILE_DOWNLOAD_FAIL"
-                result["user_message"] = (
-                    f"⚠️ File download returned HTTP {fd.status_code}")
+            import xml.etree.ElementTree as ET
+            root     = ET.fromstring(r.content)
+            root_tag = root.tag
+            actual_ns = root_tag.split("}")[0].lstrip("{") if "}" in root_tag else ""
+
+            result["raw_xml"]     = r.text[:800]
+            result["detected_ns"] = actual_ns or "(none)"
+            result["root_tag"]    = root_tag
+
+            if "acknowledgement" in actual_ns.lower():
+                ns_ack = {"a": actual_ns}
+                reason = (root.findtext(".//a:Reason/a:text", namespaces=ns_ack)
+                          or root.findtext(".//a:reason", namespaces=ns_ack) or "")
+                code   = (root.findtext(".//a:Reason/a:code", namespaces=ns_ack)
+                          or root.findtext(".//a:code", namespaces=ns_ack) or "")
+                result["ack_reason"] = reason
+                result["ack_code"]   = code
+                # code 999 = no data, try next process type
                 continue
 
-            xl = pd.read_excel(io.BytesIO(fd.content), sheet_name=None)
+            ns     = {"ns": actual_ns} if actual_ns else {}
+            prefix = "ns:" if actual_ns else ""
+            prices = [float(pt.findtext(f"{prefix}price.amount", namespaces=ns))
+                      for pt in root.findall(f".//{prefix}Point", ns)
+                      if pt.findtext(f"{prefix}price.amount", namespaces=ns)]
 
-            # Try column format first, then ISP row format
-            df_p = _parse_excel_column_format(xl, test_date, fc)
-            if df_p is None:
-                df_p = _parse_excel_isp_format(xl, test_date, fc)
-
-            if df_p is not None and not df_p.empty:
-                prices = pd.to_numeric(df_p["price"], errors="coerce").dropna()
-                if len(prices) > 0:
-                    result["price_parseable"] = True
-                    result["sample_price"] = float(prices.mean())
-                    result["working_format"] = fc
-                    result["user_message"] = (
-                        f"✅ **ADMIE API fully operational** via `{fc}`. "
-                        f"Date tested: {ds}. "
-                        f"**{len(prices)} periods** parsed. "
-                        f"Avg price: **{result['sample_price']:.2f} €/MWh**.")
-                    return result
+            if prices:
+                result["price_parseable"]  = True
+                result["sample_price"]     = float(np.mean(prices))
+                result["n_periods"]        = len(prices)
+                result["working_process"]  = process_type
+                result["error_type"]       = None
+                result["user_message"]     = (
+                    f"✅ **ENTSO-E API operational** — Greece SMP (A44/{process_type}).\n"
+                    f"Date: `{test_date}` — **{len(prices)} periods**, "
+                    f"avg **{result['sample_price']:.2f} €/MWh**.")
+                return result
 
         except Exception as e:
-            et, _ = _classify_admie_error(e)
-            result["error_type"] = et
-            result["user_message"] = f"Error testing `{fc}`: `{str(e)[:200]}`"
+            msg = _redact_token(str(e), token)
+            result["error_type"]   = "EXCEPTION"
+            result["user_message"] = f"❌ `{msg[:200]}`"
             continue
 
-    # If we got here, reachable but no price data parsed
-    if result["reachable"] and not result["price_parseable"]:
-        if not result.get("user_message"):
-            result["error_type"] = "NO_SMP_ROW"
-            result["user_message"] = (
-                "⚠️ API is reachable and files downloaded, but the SMP/price row "
-                "could not be identified in either `DAM_ResultsSummary` or "
-                "`ISP1ISPResults` for the test date. "
-                "ADMIE may have changed the row label. "
-                "Check the **Raw ISP Sheet Inspector** below for the actual row labels.")
+    # All process types exhausted
+    if not result.get("price_parseable"):
+        result["error_type"]   = result.get("error_type") or "NO_PRICES"
+        result["user_message"] = (
+            f"⚠️ Connected (HTTP 200) but no prices found for `{test_date}` "
+            f"with processType A01 or A16.\n\n"
+            f"**ACK code:** `{result.get('ack_code','?')}` — "
+            f"**Reason:** {result.get('ack_reason','No data returned.')}\n\n"
+            f"Try opening the Raw XML expander below to inspect the full response.")
+
     return result
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # API BACKOFF
@@ -357,10 +517,12 @@ def _post(session, url, payload, timeout=25, retries=3):
 # ─────────────────────────────────────────────────────────────────────────────
 class HuaweiClient:
     def __init__(self, cfg):
-        self.base_url    = cfg["base_url"].rstrip("/")
-        self.username    = cfg["username"]
-        self.system_code = cfg["system_code"]
-        self.verify_ssl  = cfg.get("verify_ssl", True)
+        # Accept both naming styles: host/user/password OR base_url/username/system_code
+        self.base_url    = (cfg.get("base_url") or cfg.get("host", "")).rstrip("/")
+        self.username    = cfg.get("username") or cfg.get("user", "")
+        self.system_code = cfg.get("system_code") or cfg.get("password", "")
+        # Default verify_ssl to False — FusionSolar EU hosts often fail local CA checks
+        self.verify_ssl  = cfg.get("verify_ssl", False)
         self.s = requests.Session()
         self.s.verify = self.verify_ssl
         self.s.headers.update({"Content-Type":"application/json",
@@ -404,7 +566,11 @@ def ensure_client():
 # DATA HELPERS
 # ─────────────────────────────────────────────────────────────────────────────
 def _norm(rows):
-    if not rows: return pd.DataFrame()
+    if not rows or not isinstance(rows, (list, dict)):
+        # A malformed/error response (e.g. a string message instead of a
+        # record list) would otherwise make pd.json_normalize raise
+        # NotImplementedError — degrade to empty instead of crashing the app.
+        return pd.DataFrame()
     df = pd.json_normalize(rows, sep=".")
     return df.loc[:, ~df.columns.duplicated()].copy()
 
@@ -462,8 +628,63 @@ def api_monthly(base_url, sid, year, xsrf, verify):
     if raw and isinstance(raw,list) and "kpiList" in raw[0]: raw=raw[0]["kpiList"]
     return _norm(raw)
 
+def api_monthly_years(base_url, sid, years, xsrf, verify) -> Dict[int, pd.DataFrame]:
+    """Fetch api_monthly() for several years concurrently instead of one-by-one."""
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(4, len(years))) as ex:
+        fut_map = {ex.submit(api_monthly, base_url, sid, yr, xsrf, verify): yr
+                   for yr in years}
+        return {fut_map[fut]: fut.result() for fut in concurrent.futures.as_completed(fut_map)}
+
+@st.cache_data(ttl=1800, show_spinner=False)
+def api_dev_5min(base_url, sid, target_date, xsrf, verify):
+    """
+    Device-level 5-min production (thirdData/getDevFiveMinutes), summed
+    across all inverters. Confirmed via live testing to be genuinely native
+    5-min resolution AND — unlike the station-level getKpiStation5min
+    (HTTP 404, not provisioned for this account) / getKpiStationHour
+    (frequently failCode=407) — not subject to the same account-wide rate
+    limit: 10 consecutive calls across different days, no delay, all
+    succeeded. Returns the same {"data": [...], "_src": ...} shape
+    api_15min() does, so it's a drop-in primary source for it.
+    """
+    s = requests.Session(); s.verify=verify
+    s.headers.update({"Content-Type":"application/json","XSRF-TOKEN":xsrf})
+    j_devs = _post(s, f"{base_url}/thirdData/getDevList", {"stationCodes":sid})
+    devs = j_devs.get("data") or []
+    inv_ids = [d["id"] for d in devs if d.get("devTypeId") in INV_DEV_TYPE_IDS]
+    if not inv_ids:
+        return {}
+    ms = int(datetime.combine(target_date, datetime.min.time(),
+                              tzinfo=timezone.utc).timestamp()*1000)
+    j = _post(s, f"{base_url}/thirdData/getDevFiveMinutes",
+             {"devIds":",".join(map(str,inv_ids)),"devTypeId":1,"collectTime":ms})
+    raw = j.get("data")
+    if not raw or not isinstance(raw, list):
+        return {}
+    df = pd.json_normalize(raw, sep=".")
+    # Exact segment match, not endswith: "reactive_power" also ends with the
+    # substring "active_power" and — caught live — sorts before it in this
+    # payload's column order, so an endswith() match silently summed
+    # reactive power (which nets negative) instead of active power.
+    pc = next((c for c in df.columns if c.split(".")[-1] == "active_power"), None)
+    if not pc or "collectTime" not in df.columns:
+        return {}
+    df[pc] = pd.to_numeric(df[pc], errors="coerce")
+    # Sum the 3 inverters' power per collectTime into a single site-level
+    # reading — must happen before this goes anywhere near
+    # _compute_day_revenue_from_frames, since its median-gap interval
+    # detection assumes one row per timestamp (3 duplicate-timestamp rows
+    # per 5-min tick would corrupt that into a near-zero median).
+    site = (df.groupby("collectTime")[pc].sum().reset_index()
+           .rename(columns={pc:"active_power"}))
+    return {"data": site.to_dict("records"), "_src": "dev5min"}
+
+
 @st.cache_data(ttl=1800, show_spinner=False)
 def api_15min(base_url, sid, target_date, xsrf, verify):
+    jd = api_dev_5min(base_url, sid, target_date, xsrf, verify)
+    if jd.get("data"):
+        return jd
     s = requests.Session(); s.verify=verify
     s.headers.update({"Content-Type":"application/json","XSRF-TOKEN":xsrf})
     ms = int(datetime.combine(target_date, datetime.min.time(),
@@ -483,300 +704,795 @@ def api_realtime(base_url, dev_type, dev_ids, xsrf, verify):
               {"devTypeId":dev_type,"devIds":",".join(map(str,dev_ids))})
     return _norm(j.get("data",[]))
 
-# ── ADMIE Excel parsing helpers ───────────────────────────────────────────────
-# Diagnostic output revealed two distinct file formats:
-#
-#  Format A — DAM_ResultsSummary (legacy, pre-ISP reform):
-#    Traditional layout: rows = periods, named price COLUMN (MCP/SMP/Price/Τιμή)
-#    Status: Now returns [] for recent dates — Greece fully migrated to ISP.
-#
-#  Format B — ISP1ISPResults (current format as of 2025-26):
-#    TRANSPOSED layout: col 0 = entity/metric label, cols 1-96 = 15-min periods.
-#    The SMP is a specific ROW identified by its label in col 0.
-#    Timestamps run across the column headers, not down a column.
-
-# SMP row label keywords to search for in col 0 of ISP sheets
-_SMP_ROW_KEYWORDS = [
-    "system marginal price", "smp", "marginal price", "clearing price",
-    "imbalance settlement price", "balancing price", "settlement price",
-    "οριακή τιμή", "τιμή εκκαθάρισης", "τιμή αγοράς", "ota",
-    # Broader fallback — any row whose label contains both "price" and "system"
-    # is evaluated after exact matches fail
-]
-
-def _extract_url_from_entry(fe: dict) -> Optional[str]:
-    """Pull the file download URL out of an ADMIE API file metadata dict."""
-    furl = fe.get("file_path") or fe.get("url") or fe.get("link")
-    if not furl:
-        for v in fe.values():
-            if isinstance(v, str) and (
-                v.startswith("http") or v.endswith(".xlsx") or v.endswith(".xls")
-            ):
-                furl = v; break
-    return furl
-
-
-def _parse_excel_column_format(xl: dict, target_date: date, fc: str
-                                ) -> Optional[pd.DataFrame]:
-    """
-    Format A: traditional column layout — one row per period, one column = price.
-    Used by DAM_ResultsSummary files.
-    """
-    for df_s in xl.values():
-        cl = [str(c).lower() for c in df_s.columns]
-        pc = next((df_s.columns[i] for i, c in enumerate(cl)
-                   if any(k in c for k in ["mcp", "smp", "price", "τιμή"])), None)
-        tc = next((df_s.columns[i] for i, c in enumerate(cl)
-                   if any(k in c for k in ["period", "time", "ώρα", "dp", "hour"])), None)
-        if pc and tc:
-            df_p = df_s[[tc, pc]].copy()
-            df_p.columns = ["Period", "price"]
-            df_p["price"] = pd.to_numeric(df_p["price"], errors="coerce")
-            df_p = df_p.dropna(subset=["price"])
-            n = len(df_p)
-            if n == 0: continue
-            freq = 15 if n >= 88 else 60
-            base = datetime(target_date.year, target_date.month,
-                            target_date.day, tzinfo=timezone.utc)
-            df_p["dt"] = [base + timedelta(minutes=freq * i) for i in range(n)]
-            df_p["dt"] = pd.to_datetime(df_p["dt"]).dt.tz_convert(PLANT_TZ)
-            df_p["_src"] = fc
-            return df_p[["dt", "price", "_src"]]
-    return None
-
-
-def _parse_excel_isp_format(xl: dict, target_date: date, fc: str
-                             ) -> Optional[pd.DataFrame]:
-    """
-    Format B: ISP1ISPResults transposed layout.
-    - col 0  = entity/metric label (search this for SMP keywords)
-    - cols 1..96 = values per 15-min period
-    - col 97 = TOTAL (ignore)
-    The SMP row is identified by its label in column 0.
-    If exact keyword match fails, fall back to finding a row with 96 numeric
-    values in a plausible €/MWh range (5 – 600).
-    """
-    for sheet_name, df_s in xl.items():
-        if df_s.shape[1] < 25:
-            continue  # too few columns to be a time-series sheet
-
-        label_col = df_s.columns[0]  # 'Unnamed: 0' in ISP files
-
-        # Pass 1 — exact keyword match on row label
-        for idx, row in df_s.iterrows():
-            label = str(row.iloc[0]).lower().strip()
-            if any(kw in label for kw in _SMP_ROW_KEYWORDS):
-                result = _build_isp_price_series(row, target_date, fc, sheet_name)
-                if result is not None:
-                    return result
-
-        # Pass 2 — broader heuristic: row label contains both "price" and "system"
-        for idx, row in df_s.iterrows():
-            label = str(row.iloc[0]).lower().strip()
-            if "price" in label and "system" in label:
-                result = _build_isp_price_series(row, target_date, fc, sheet_name)
-                if result is not None:
-                    return result
-
-        # Pass 3 — numeric fallback: find first row with 88-96 numeric values
-        # all in the range 0-600 €/MWh (rules out load/generation MW rows)
-        for idx, row in df_s.iterrows():
-            vals = pd.to_numeric(row.iloc[1:97], errors="coerce").dropna()
-            if len(vals) >= 88 and (vals >= 0).all() and (vals <= 600).all():
-                result = _build_isp_price_series(row, target_date, fc,
-                                                  f"{sheet_name}[heuristic]")
-                if result is not None:
-                    return result
-
-    return None
-
-
-def _build_isp_price_series(row: pd.Series, target_date: date,
-                              fc: str, source_label: str) -> Optional[pd.DataFrame]:
-    """Convert a single ISP row (96 period values) into a dt/price DataFrame."""
-    vals = pd.to_numeric(row.iloc[1:97], errors="coerce").dropna()
-    n = len(vals)
-    if n < 24:
+# ── Device alarms / events ──────────────────────────────────────────────────
+# NOTE: Huawei's Northbound "thirdData/getAlarmList" field names vary a bit
+# by tenant/API version, so columns are resolved by keyword (_resolve_alarm_cols)
+# rather than hardcoded — the Events tab's "Raw response" expander lets you
+# confirm/adjust the mapping against your actual account's payload.
+def _resolve_alarm_cols(df: pd.DataFrame) -> Dict[str, Optional[str]]:
+    def find(*keys):
+        for c in df.columns:
+            cl = c.lower()
+            if all(k in cl for k in keys):
+                return c
         return None
-    freq = 15 if n >= 88 else 60
-    base = datetime(target_date.year, target_date.month,
-                    target_date.day, tzinfo=timezone.utc)
-    dts = pd.to_datetime(
-        [base + timedelta(minutes=freq * i) for i in range(n)]
-    ).tz_convert(PLANT_TZ)
-    return pd.DataFrame({"dt": dts, "price": vals.values,
-                          "_src": f"{fc}:{source_label}"})
+    return dict(
+        time   = find("raise","time") or find("occur","time") or find("time"),
+        name   = find("alarm","name") or find("name"),
+        level  = find("lev") or find("severity"),
+        device = find("device","name") or find("station","name") or find("device"),
+        cause  = find("cause") or find("desc") or find("suggestion"),
+        status = find("status") or find("clear"),
+    )
 
+@st.cache_data(ttl=600, show_spinner=False)
+def api_alarms(base_url, sid, begin_ms, end_ms, xsrf, verify):
+    """
+    Fetch device alarms/events for a station over [begin_ms, end_ms) from
+    FusionSolar (thirdData/getAlarmList). Returns a raw normalised DataFrame —
+    pass through normalize_alarms() to get the stable [dt, Device, Severity,
+    Alarm, Cause, Status] schema used by the UI.
+    """
+    s = requests.Session(); s.verify=verify
+    s.headers.update({"Content-Type":"application/json","XSRF-TOKEN":xsrf})
+    j = _post(s, f"{base_url}/thirdData/getAlarmList",
+              {"stationCodes":sid, "beginTime":begin_ms, "endTime":end_ms,
+               "language":"en_US"})
+    # Some Huawei endpoints (e.g. getStationList) wrap results as
+    # {"data": {"list": [...], "total": N, ...}} rather than a bare list —
+    # getAlarmList appears to follow the same pagination pattern. Unwrap it,
+    # and don't assume the shape: anything else degrades to no rows instead
+    # of crashing (see _norm's defensive check for the same reason).
+    d = j.get("data", [])
+    rows = d.get("list", []) if isinstance(d, dict) else (d if isinstance(d, list) else [])
+    return _norm(rows)
 
-def _fetch_admie_file(fc: str, date_start: str, date_end: str,
-                      timeout: int = 15) -> Optional[bytes]:
+def api_alarms_range(base_url, sid, start_date, end_date, xsrf, verify,
+                     chunk_days=30) -> pd.DataFrame:
     """
-    Call the ADMIE metadata API and download the latest Excel file for a given
-    FileCategory and date range. Returns raw bytes or None on any failure.
-    Records errors in session state.
+    Fetch alarms over [start_date, end_date] (inclusive), chunked into
+    <=chunk_days windows and fetched concurrently — mirrors the ENTSO-E/KPI
+    batch helpers above so wide date ranges don't serialize into a long wait.
     """
+    windows = []
+    d = start_date
+    while d <= end_date:
+        w_end = min(d + timedelta(days=chunk_days-1), end_date)
+        windows.append((d, w_end))
+        d = w_end + timedelta(days=1)
+
+    def _fetch(w):
+        cs, ce = w
+        b = int(datetime.combine(cs, datetime.min.time(), tzinfo=timezone.utc).timestamp()*1000)
+        e = int(datetime.combine(ce + timedelta(days=1), datetime.min.time(),
+                                 tzinfo=timezone.utc).timestamp()*1000) - 1
+        return api_alarms(base_url, sid, b, e, xsrf, verify)
+
+    if len(windows) == 1:
+        return _fetch(windows[0])
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(6, len(windows))) as ex:
+        dfs = list(ex.map(_fetch, windows))
+    dfs = [d for d in dfs if not d.empty]
+    return pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
+
+def normalize_alarms(df_raw: pd.DataFrame) -> pd.DataFrame:
+    """
+    Map a raw getAlarmList DataFrame onto a stable schema:
+    [dt, Device, Severity, Alarm, Cause, Status] — used by both the Intraday
+    hover overlay and the Events Analytics tab.
+    """
+    empty = pd.DataFrame(columns=["dt","Device","Severity","Alarm","Cause","Status"])
+    if df_raw.empty:
+        return empty
+    cols = _resolve_alarm_cols(df_raw)
+    if not cols["time"] or not cols["name"]:
+        return empty
+
+    out = pd.DataFrame()
+    ts = pd.to_numeric(df_raw[cols["time"]], errors="coerce")
+    out["dt"] = pd.to_datetime(ts, unit="ms", utc=True, errors="coerce").dt.tz_convert(PLANT_TZ)
+    out["Device"] = df_raw[cols["device"]].astype(str) if cols["device"] else "—"
+    if cols["level"]:
+        lv = pd.to_numeric(df_raw[cols["level"]], errors="coerce")
+        out["Severity"] = lv.map(ALARM_LEVEL_MAP).fillna("Unknown")
+    else:
+        out["Severity"] = "Unknown"
+    out["Alarm"] = df_raw[cols["name"]].astype(str)
+    out["Cause"] = df_raw[cols["cause"]].astype(str) if cols["cause"] else ""
+    out["Status"] = df_raw[cols["status"]].astype(str) if cols["status"] else ""
+    return out.dropna(subset=["dt"]).sort_values("dt").reset_index(drop=True)
+
+def _add_event_markers(fig, events: pd.DataFrame, secondary_y=False, y_frac=0.04):
+    """
+    Overlay events as a hoverable scatter "rug" near the bottom of a
+    time-series figure — one trace per severity so the legend can toggle
+    them and the marker color communicates severity at a glance.
+    """
+    if events.empty:
+        return fig
+    ymax = 0.0
+    for tr in fig.data:
+        if getattr(tr, "y", None) is not None and len(tr.y):
+            vals = pd.to_numeric(pd.Series(tr.y), errors="coerce").dropna()
+            if not vals.empty:
+                ymax = max(ymax, float(vals.max()))
+    y_pos = ymax * y_frac if ymax > 0 else 0
+    for sev in ALARM_LEVEL_ORDER:
+        sub = events[events["Severity"] == sev]
+        if sub.empty:
+            continue
+        fig.add_scatter(
+            x=sub["dt"], y=[y_pos]*len(sub), mode="markers",
+            name=f"⚠ {sev}",
+            marker=dict(symbol="diamond", size=9,
+                       color=ALARM_LEVEL_COLOR.get(sev, "#94a3b8"),
+                       line=dict(width=1, color="#0e1117")),
+            customdata=sub[["Device","Alarm","Cause"]].values,
+            hovertemplate=(f"<b>{sev}</b> — %{{customdata[1]}}<br>"
+                          "%{customdata[0]}<br>%{customdata[2]}<br>"
+                          "%{x}<extra></extra>"),
+            secondary_y=secondary_y)
+    return fig
+
+# ── Price source helpers ──────────────────────────────────────────────────────
+# Greek SMP source: ENTSO-E Transparency Platform, document A44 (Day-Ahead Prices)
+# Domain: 10YGR-HTSO-----Y  (Greece bidding zone)
+# Token : secrets.toml → [entsoe] api_key
+# Register free at: https://transparency.entsoe.eu
+
+def _get_entsoe_token() -> Optional[str]:
+    """Read ENTSO-E API token from Streamlit secrets."""
     try:
-        r = requests.get(ADMIE_API,
-            params={"dateStart": date_start, "dateEnd": date_end,
-                    "FileCategory": fc},
-            timeout=timeout, verify=False)
-        deny = r.headers.get("x-deny-reason")
-        if deny:
-            st.session_state["_admie_last_error"] = \
-                f"Egress proxy blocked: x-deny-reason={deny}"
-            return None
-        if r.status_code != 200:
-            st.session_state["_admie_last_error"] = \
-                f"HTTP {r.status_code} from ADMIE metadata API"
-            return None
-        files = r.json()
-        if not files:
-            return None   # no files for this date — not an error
-        furl = _extract_url_from_entry(files[-1])
-        if not furl:
-            st.session_state["_admie_last_error"] = \
-                f"No URL found in file entry: {list(files[-1].keys())}"
-            return None
-        fd = requests.get(furl, timeout=25, verify=False)
-        if fd.status_code != 200:
-            st.session_state["_admie_last_error"] = \
-                f"File download HTTP {fd.status_code} for {furl[:80]}"
-            return None
-        return fd.content
-    except Exception as e:
-        et, _ = _classify_admie_error(e)
-        st.session_state["_admie_last_error"] = f"{et}: {str(e)[:180]}"
+        return st.secrets["entsoe"]["api_key"]
+    except Exception:
         return None
+
+
+def _redact_token(msg: str, token: Optional[str]) -> str:
+    """
+    Strip the ENTSO-E securityToken out of exception text before it's stored
+    in session_state or shown in the UI. requests/urllib3 connection errors
+    (proxy failures, timeouts, etc.) embed the full request URL — including
+    the query string — in their message, so the token leaks unless removed.
+    """
+    if token and token in msg:
+        msg = msg.replace(token, "***")
+    return msg
+
+
+def _fetch_dam_daily_uncached(target_date: date, token: str,
+                              timeout: int = 20) -> Tuple[pd.DataFrame, Optional[str]]:
+    """
+    Raw ENTSO-E 15-min SMP fetch for one day — no Streamlit calls inside, so
+    it's safe to run from a worker thread (used by dam_daily / dam_daily_batch).
+    Returns (DataFrame[dt, price, _src], error_message_or_None).
+    """
+    empty = pd.DataFrame(columns=["dt", "price", "_src"])
+    period_start = datetime(target_date.year, target_date.month,
+                            target_date.day, 0, 0, tzinfo=timezone.utc)
+    period_end   = period_start + timedelta(days=1)
+
+    import xml.etree.ElementTree as ET
+
+    last_err = None
+    for process_type in ["A01", "A16"]:
+        params = {
+            "securityToken": token,
+            "documentType":  "A44",
+            "processType":   process_type,
+            "in_Domain":     ENTSOE_ZONE,
+            "out_Domain":    ENTSOE_ZONE,
+            "periodStart":   period_start.strftime("%Y%m%d%H%M"),
+            "periodEnd":     period_end.strftime("%Y%m%d%H%M"),
+        }
+        try:
+            r = _ENTSOE_SESSION.get(ENTSOE_API, params=params, timeout=timeout,
+                                    proxies=_get_proxies(), verify=False)
+            if r.status_code == 401:
+                return empty, "ENTSO-E 401 Unauthorised — check api_key in secrets.toml"
+            if r.status_code != 200:
+                last_err = f"ENTSO-E HTTP {r.status_code}"
+                continue
+
+            root     = ET.fromstring(r.content)
+            root_tag = root.tag
+            actual_ns = root_tag.split("}")[0].lstrip("{") if "}" in root_tag else ""
+
+            if "acknowledgement" in actual_ns.lower():
+                continue   # no data for this process type, try next
+
+            ns     = {"ns": actual_ns} if actual_ns else {}
+            prefix = "ns:" if actual_ns else ""
+
+            rows = []
+            for ts in root.findall(f".//{prefix}TimeSeries", ns):
+                resolution = ts.findtext(f".//{prefix}resolution", namespaces=ns) or "PT60M"
+                freq_min   = 15 if "PT15M" in resolution else 60
+                start_str  = ts.findtext(f".//{prefix}timeInterval/{prefix}start", namespaces=ns)
+                if not start_str:
+                    continue
+                ts_start = datetime.strptime(start_str, "%Y-%m-%dT%H:%MZ").replace(
+                    tzinfo=timezone.utc)
+                for pt in ts.findall(f".//{prefix}Point", ns):
+                    pos   = int(pt.findtext(f"{prefix}position", namespaces=ns) or 0)
+                    price = float(pt.findtext(f"{prefix}price.amount", namespaces=ns) or "nan")
+                    dt    = ts_start + timedelta(minutes=freq_min * (pos - 1))
+                    rows.append({"dt": dt, "price": price})
+
+            if rows:
+                df = pd.DataFrame(rows)
+                df["dt"] = pd.to_datetime(df["dt"]).dt.tz_convert(PLANT_TZ)
+                df = df.dropna(subset=["price"]).sort_values("dt").reset_index(drop=True)
+                df["_src"] = f"ENTSO-E:A44/{process_type}"
+                _persist_dam_prices(df[["dt", "price"]],
+                                   resolution_min=15 if freq_min == 15 else 60)
+                return df[["dt", "price", "_src"]], None
+
+        except Exception as e:
+            safe_msg = _redact_token(str(e), token)
+            last_err = f"ENTSO-E parse error: {type(e).__name__}: {safe_msg[:220]}"
+            continue
+
+    return empty, last_err or f"ENTSO-E returned no price data for {target_date} (tried A01 + A16)"
+
+
+def _fetch_henex_dam_uncached(target_date: date, timeout: int = 20) -> Tuple[pd.DataFrame, Optional[str]]:
+    """
+    Raw Hellenic Energy Exchange (HEnEx/EnEx Group) Day-Ahead Market price
+    fetch — a genuinely independent live source from ENTSO-E: separate
+    organization, separate infrastructure (enexgroup.gr's own public
+    document library), no authentication required. The URL pattern was
+    obtained directly from trading@enexgroup.gr (their documented
+    "automated downloading" endpoint, not reverse-engineered), and the
+    result was verified against a live ENTSO-E pull for the same day:
+    R²=1.0, zero difference across all 95 matched 15-min prices
+    (2026-08-27), after correcting the MTU-numbering quirk documented below.
+
+    File layout (per HEnEx's own PDF documentation): sheet
+    "SPOT_Summary (SELL)", row 3 holds the MTU (Market Time Unit) column
+    index (1..92/96/100 depending on DST), and the row labelled
+    "Greece Mainland (15min MCP)" holds the 15-min clearing price per MTU.
+
+    MTU numbering quirk (found empirically — NOT stated in HEnEx's
+    documentation): despite row 3's date cell displaying midnight, MTU=1
+    actually represents 01:00 Athens local time, not 00:00 (a legacy 1-24
+    hour-labelling convention). The anchor below is deliberately local
+    01:00 — confirmed to reproduce ENTSO-E's values exactly; anchoring at
+    00:00 is off by exactly one hour.
+
+    No Streamlit calls inside — safe to run from a worker thread.
+    Returns (DataFrame[dt, price, _src], error_message_or_None).
+    """
+    empty = pd.DataFrame(columns=["dt", "price", "_src"])
+    yyyymmdd = target_date.strftime("%Y%m%d")
+    last_err = None
+
+    for version in (1, 2):
+        url = (f"https://www.enexgroup.gr/documents/20126/366820/"
+              f"{yyyymmdd}_EL-DAM_ResultsSummary_EN_v{version:02d}.xlsx")
+        try:
+            r = requests.get(url, timeout=timeout, proxies=_get_proxies(), verify=True)
+            if r.status_code == 404:
+                last_err = f"HEnEx: no file published yet for {target_date} (v{version:02d})"
+                continue
+            if r.status_code != 200:
+                last_err = f"HEnEx HTTP {r.status_code}"
+                continue
+
+            wb = openpyxl.load_workbook(io.BytesIO(r.content), data_only=True, read_only=True)
+            ws = wb[wb.sheetnames[0]]
+            rows = list(ws.iter_rows(min_row=1, max_row=15, values_only=True))
+            if len(rows) < 8:
+                last_err = "HEnEx: workbook shorter than expected"
+                continue
+
+            row3 = rows[2]
+            mtu_idx = [i for i, v in enumerate(row3) if isinstance(v, (int, float))]
+            if not mtu_idx:
+                last_err = "HEnEx: could not locate MTU index row"
+                continue
+
+            price_row = None
+            for row in rows:
+                label = row[0]
+                if label and "mainland" in str(label).lower() and "mcp" in str(label).lower():
+                    price_row = row
+                    break
+            if price_row is None:
+                last_err = "HEnEx: could not locate 'Greece Mainland (...MCP)' row"
+                continue
+
+            prices = [price_row[i] for i in mtu_idx]
+            if not all(isinstance(p, (int, float)) for p in prices):
+                last_err = "HEnEx: non-numeric value in price row"
+                continue
+
+            n = len(prices)
+            resolution_min = 15 if n > 30 else 60
+            local_anchor = datetime(target_date.year, target_date.month, target_date.day,
+                                    1, 0, tzinfo=ZoneInfo(PLANT_TZ))
+            utc_anchor = local_anchor.astimezone(timezone.utc)
+            timestamps = [utc_anchor + timedelta(minutes=resolution_min * i) for i in range(n)]
+
+            df = pd.DataFrame({"dt": timestamps, "price": [float(p) for p in prices]})
+            df["dt"] = pd.to_datetime(df["dt"], utc=True).dt.tz_convert(PLANT_TZ)
+            df["_src"] = "HEnEx:DAM_ResultsSummary"
+            _persist_dam_prices(df[["dt", "price"]], resolution_min=resolution_min, source="HENEX")
+            return df[["dt", "price", "_src"]], None
+
+        except Exception as e:
+            last_err = f"HEnEx parse error: {type(e).__name__}: {str(e)[:220]}"
+            continue
+
+    return empty, last_err or f"HEnEx returned no data for {target_date}"
+
+
+def _incomplete_day(day_df: pd.DataFrame) -> bool:
+    """
+    True if day_df has markedly fewer points than a full day at its own
+    apparent resolution. Confirmed live (2026-03-29) that ENTSO-E can return
+    HTTP 200 / no error while silently missing a multi-hour chunk of a day —
+    "no error" alone isn't proof of a complete day.
+    """
+    if len(day_df) < 2:
+        return True
+    median_gap_min = day_df["dt"].diff().dt.total_seconds().median() / 60
+    if median_gap_min <= 20:
+        return len(day_df) < 90    # normal 15-min day; DST-short day has 92
+    return len(day_df) < 22        # normal hourly day; DST-short day has 23
+
+
+def _fetch_dam_daily_with_fallback(target_date: date, token: str) -> Tuple[pd.DataFrame, Optional[str]]:
+    """
+    Tries, in order: (1) ENTSO-E live, (2) HEnEx live — the Hellenic Energy
+    Exchange, a genuinely independent organization/infrastructure, verified
+    to match ENTSO-E exactly (see _fetch_henex_dam_uncached) — (3) the
+    durable local dam_prices journal (whatever was last successfully
+    fetched for this exact day, from either source).
+
+    A successful ENTSO-E response is also checked for completeness, not
+    just absence of an error — if the day is markedly short (see
+    _incomplete_day), HEnEx is fetched once to fill in just the missing
+    timestamps. ENTSO-E's own values are never overwritten, only genuine
+    gaps are filled — and HEnEx is only fetched at all when a gap is
+    actually suspected, so a normal complete day costs nothing extra.
+
+    Still returns an error string even on a successful HEnEx/cache
+    fallback (or a gap-fill), so callers can tell the difference from a
+    fully live ENTSO-E value (dam_daily surfaces this via _entsoe_last_error).
+    """
+    df, err = _fetch_dam_daily_uncached(target_date, token)
+    if not err:
+        day_start = pd.Timestamp(target_date, tz=PLANT_TZ)
+        day_end = day_start + timedelta(days=1)
+        day_df = df[(df["dt"] >= day_start) & (df["dt"] < day_end)].sort_values("dt").reset_index(drop=True)
+
+        if not _incomplete_day(day_df):
+            return day_df, None
+
+        henex_df, henex_err = _fetch_henex_dam_uncached(target_date)
+        if henex_err or henex_df.empty:
+            return day_df, (f"ENTSO-E response for {target_date} looks incomplete "
+                            f"({len(day_df)} periods) and the HEnEx fill attempt failed: {henex_err}")
+
+        have = set(day_df["dt"])
+        fill = henex_df[~henex_df["dt"].isin(have)]
+        if fill.empty:
+            return day_df, None   # HEnEx had nothing extra — treat the ENTSO-E day as-is
+        filled = pd.concat([day_df, fill], ignore_index=True).sort_values("dt").reset_index(drop=True)
+        return filled, (f"ENTSO-E response for {target_date} was missing "
+                        f"{len(fill)} period(s) — filled from HEnEx.")
+
+    henex_df, henex_err = _fetch_henex_dam_uncached(target_date)
+    if not henex_err:
+        return henex_df, f"{err} — served from HEnEx (Hellenic Energy Exchange) instead."
+
+    cached = _read_cached_dam_prices(target_date)
+    if not cached.empty:
+        return cached, f"{err}; {henex_err} — served {len(cached)} row(s) from local cache instead."
+    return df, f"{err}; {henex_err}"
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def dam_daily(target_date: date) -> pd.DataFrame:
     """
-    Fetch 15-min SMP/DAM clearing prices from ADMIE for a single day.
+    Fetch 15-min Greek SMP from ENTSO-E Transparency Platform (A44, Day-Ahead).
     Returns DataFrame[dt, price, _src] or empty frame on failure.
 
-    Strategy (in order):
-    1. Try DAM_ResultsSummary (column format) — works for pre-2025 dates
-    2. Try ISP1ISPResults (transposed row format) — current Greek market format
-    3. If today has no ISP file yet (published D-1 ~19:00 EET), try yesterday
+    Requires ENTSO-E API token in secrets.toml:
+        [entsoe]
+        api_key = "your-token"
+
+    Register free at: https://transparency.entsoe.eu
+
+    For fetching several days at once, prefer dam_daily_batch() which runs the
+    requests concurrently instead of one-by-one.
     """
-    ds  = target_date.strftime("%Y-%m-%d")
-    ds1 = (target_date - timedelta(days=1)).strftime("%Y-%m-%d")
     empty = pd.DataFrame(columns=["dt", "price", "_src"])
+    token = _get_entsoe_token()
 
-    # ── Pass 1: DAM_ResultsSummary (legacy column format) ────────────────────
-    content = _fetch_admie_file("DAM_ResultsSummary", ds, ds)
-    if content:
-        xl = pd.read_excel(io.BytesIO(content), sheet_name=None)
-        result = _parse_excel_column_format(xl, target_date, "DAM_ResultsSummary")
-        if result is not None:
-            st.session_state.pop("_admie_last_error", None)
-            return result
-
-    # ── Pass 2: ISP1ISPResults for the requested date (transposed row format) ─
-    content = _fetch_admie_file("ISP1ISPResults", ds, ds)
-    if content:
-        xl = pd.read_excel(io.BytesIO(content), sheet_name=None)
-        result = _parse_excel_isp_format(xl, target_date, "ISP1ISPResults")
-        if result is not None:
-            st.session_state.pop("_admie_last_error", None)
-            return result
-
-    # ── Pass 3: ISP1ISPResults published the day before (D-1 publication) ────
-    content = _fetch_admie_file("ISP1ISPResults", ds1, ds1)
-    if content:
-        xl = pd.read_excel(io.BytesIO(content), sheet_name=None)
-        result = _parse_excel_isp_format(xl, target_date - timedelta(days=1),
-                                          "ISP1ISPResults")
-        if result is not None:
-            # re-stamp timestamps to target_date
-            result["dt"] = result["dt"] + pd.Timedelta(days=1)
-            result["_src"] += ":D-1proxy"
-            st.session_state.pop("_admie_last_error", None)
-            return result
-
-    # Record a clear diagnostic if all passes fail
-    if "_admie_last_error" not in st.session_state:
-        st.session_state["_admie_last_error"] = (
-            f"No price data found for {ds} in DAM_ResultsSummary or ISP1ISPResults. "
-            f"ISP files are published around 19:00 EET the day before."
+    if not token:
+        st.session_state["_entsoe_last_error"] = (
+            "No ENTSO-E API token found. Add [entsoe] api_key to secrets.toml. "
+            "Register free at https://transparency.entsoe.eu"
         )
-    return empty
+        return empty
+
+    df, err = _fetch_dam_daily_with_fallback(target_date, token)
+    if err:
+        st.session_state["_entsoe_last_error"] = err
+    else:
+        st.session_state.pop("_entsoe_last_error", None)
+    return df
+
+
+def dam_daily_batch(dates: List[date]) -> Dict[date, pd.DataFrame]:
+    """
+    Fetch several days of 15-min DAM prices concurrently (ThreadPoolExecutor)
+    instead of sequentially — cuts wall-clock time roughly by the worker count
+    for multi-day pulls (e.g. the 7-day forecast tab).
+
+    Results are memoised in session_state for the life of the session so
+    repeated reruns of the same date range don't re-hit the network.
+    """
+    empty = pd.DataFrame(columns=["dt", "price", "_src"])
+    cache: Dict[date, pd.DataFrame] = st.session_state.setdefault("_dam_daily_cache", {})
+    token = _get_entsoe_token()
+
+    result: Dict[date, pd.DataFrame] = {}
+    missing = []
+    for d in dict.fromkeys(dates):   # de-dupe, keep order
+        if d in cache:
+            result[d] = cache[d]
+        else:
+            missing.append(d)
+
+    if not missing:
+        return result
+
+    if not token:
+        st.session_state["_entsoe_last_error"] = (
+            "No ENTSO-E API token found. Add [entsoe] api_key to secrets.toml. "
+            "Register free at https://transparency.entsoe.eu"
+        )
+        for d in missing:
+            cache[d] = empty
+            result[d] = empty
+        return result
+
+    last_err = None
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(6, len(missing))) as ex:
+        fut_map = {ex.submit(_fetch_dam_daily_with_fallback, d, token): d for d in missing}
+        for fut in concurrent.futures.as_completed(fut_map):
+            d = fut_map[fut]
+            try:
+                df, err = fut.result()
+            except Exception as e:
+                df, err = empty, _redact_token(str(e), token)
+            if err:
+                last_err = err
+            cache[d] = df
+            result[d] = df
+
+    if last_err:
+        st.session_state["_entsoe_last_error"] = last_err
+    else:
+        st.session_state.pop("_entsoe_last_error", None)
+    return result
+
+
+def _fetch_dam_monthly_avg_uncached(year: int, month: int, token: str,
+                                    timeout: int = 30) -> Tuple[Optional[float], Optional[str]]:
+    """
+    Raw ENTSO-E monthly-average SMP fetch — no Streamlit calls inside, so it's
+    safe to run from a worker thread (used by dam_monthly_avg / _batch).
+    Returns (avg_price_or_None, error_message_or_None).
+    """
+    last_day     = calendar.monthrange(year, month)[1]
+    period_start = datetime(year, month, 1, 0, 0, tzinfo=timezone.utc)
+    period_end   = datetime(year, month, last_day, 23, 0, tzinfo=timezone.utc)
+
+    import xml.etree.ElementTree as ET
+
+    last_err = None
+    for process_type in ["A01", "A16"]:
+        params = {
+            "securityToken": token,
+            "documentType":  "A44",
+            "processType":   process_type,
+            "in_Domain":     ENTSOE_ZONE,
+            "out_Domain":    ENTSOE_ZONE,
+            "periodStart":   period_start.strftime("%Y%m%d%H%M"),
+            "periodEnd":     period_end.strftime("%Y%m%d%H%M"),
+        }
+        try:
+            r = _ENTSOE_SESSION.get(ENTSOE_API, params=params, timeout=timeout,
+                                    proxies=_get_proxies(), verify=False)
+            if r.status_code != 200:
+                last_err = f"ENTSO-E HTTP {r.status_code}"
+                continue
+
+            root      = ET.fromstring(r.content)
+            root_tag  = root.tag
+            actual_ns = root_tag.split("}")[0].lstrip("{") if "}" in root_tag else ""
+
+            if "acknowledgement" in actual_ns.lower():
+                continue
+
+            ns     = {"ns": actual_ns} if actual_ns else {}
+            prefix = "ns:" if actual_ns else ""
+            prices = []
+            for pt in root.findall(f".//{prefix}Point", ns):
+                v = pt.findtext(f"{prefix}price.amount", namespaces=ns)
+                if v:
+                    fv = float(v)
+                    if fv > 0:
+                        prices.append(fv)
+
+            if prices:
+                return float(np.mean(prices)), None
+
+        except Exception as e:
+            safe_msg = _redact_token(str(e), token)
+            last_err = f"ENTSO-E monthly error: {type(e).__name__}: {safe_msg[:220]}"
+            continue
+
+    return None, last_err
 
 
 @st.cache_data(ttl=7200, show_spinner=False)
 def dam_monthly_avg(year: int, month: int) -> Optional[float]:
     """
-    Monthly average SMP/DAM price from ADMIE.
-    Tries DAM_ResultsSummary first (for historical months), then samples
-    ISP1ISPResults across the month (current format).
-    Falls back to SQLite price cache if the API is unreachable.
+    Monthly average Greek SMP from ENTSO-E (A44, Day-Ahead).
+    Falls back to SQLite price cache if API token missing or unreachable.
+
+    For fetching several months at once, prefer dam_monthly_avg_batch() which
+    runs the requests concurrently instead of one-by-one.
     """
-    ym   = f"{year}-{month:02d}"
-    ds1  = f"{year}-{month:02d}-01"
-    last = calendar.monthrange(year, month)[1]
-    dsN  = f"{year}-{month:02d}-{last:02d}"
+    ym    = f"{year}-{month:02d}"
+    token = _get_entsoe_token()
 
-    # ── Attempt 1: DAM_ResultsSummary (legacy, works for older months) ────────
-    try:
-        r = requests.get(ADMIE_API,
-            params={"dateStart": ds1, "dateEnd": dsN,
-                    "FileCategory": "DAM_ResultsSummary"},
-            timeout=15, verify=False)
-        deny = r.headers.get("x-deny-reason")
-        if deny:
-            st.session_state["_admie_last_error"] = f"Egress proxy blocked: {deny}"
-            return _get_cached_dam_price(ym)
-        if r.status_code == 200 and r.json():
-            prices = []
-            for fe in r.json():
-                furl = _extract_url_from_entry(fe)
-                if not furl: continue
-                fd = requests.get(furl, timeout=25, verify=False)
-                if fd.status_code != 200: continue
-                xl = pd.read_excel(io.BytesIO(fd.content), sheet_name=None)
-                for df_s in xl.values():
-                    cl = [str(c).lower() for c in df_s.columns]
-                    pc = next((df_s.columns[i] for i, c in enumerate(cl)
-                               if any(k in c for k in
-                                      ["mcp", "smp", "price", "τιμή"])), None)
-                    if pc:
-                        v = pd.to_numeric(df_s[pc], errors="coerce").dropna()
-                        prices.extend(v[v > 0].tolist()); break
-            if prices:
-                avg = float(np.mean(prices))
-                _cache_dam_price(ym, avg)
-                return avg
-    except Exception as e:
-        et, _ = _classify_admie_error(e)
-        st.session_state["_admie_last_error"] = f"{et}: {str(e)[:180]}"
+    if not token:
+        return _get_cached_dam_price(ym)
 
-    # ── Attempt 2: ISP1ISPResults — sample ~8 representative days per month ──
-    # Fetching all ~30 daily files is too slow; sample every 4th day.
-    try:
-        sample_days = list(range(1, last + 1, 4))  # days 1,5,9,...
-        all_prices: List[float] = []
-        for day in sample_days:
-            ds = f"{year}-{month:02d}-{day:02d}"
-            content = _fetch_admie_file("ISP1ISPResults", ds, ds, timeout=20)
-            if not content:
-                continue
-            xl = pd.read_excel(io.BytesIO(content), sheet_name=None)
-            d  = date(year, month, day)
-            df_day = _parse_excel_isp_format(xl, d, "ISP1ISPResults")
-            if df_day is not None and not df_day.empty:
-                day_prices = pd.to_numeric(df_day["price"], errors="coerce").dropna()
-                all_prices.extend(day_prices[day_prices > 0].tolist())
-        if all_prices:
-            avg = float(np.mean(all_prices))
-            _cache_dam_price(ym, avg)
-            return avg
-    except Exception as e:
-        et, _ = _classify_admie_error(e)
-        st.session_state["_admie_last_error"] = f"{et}: {str(e)[:180]}"
-
-    # ── Fallback: cached value from previous successful fetch ─────────────────
+    avg, err = _fetch_dam_monthly_avg_uncached(year, month, token)
+    if avg is not None:
+        _cache_dam_price(ym, avg)
+        return avg
+    if err:
+        st.session_state["_entsoe_last_error"] = err
     return _get_cached_dam_price(ym)
+
+
+def dam_monthly_avg_batch(pairs: List[Tuple[int, int]]) -> Dict[Tuple[int, int], Optional[float]]:
+    """
+    Fetch several (year, month) DAM averages concurrently (ThreadPoolExecutor)
+    instead of sequentially — cuts wall-clock time roughly by the worker count
+    for multi-month pulls (e.g. the Monthly/Financial tabs' YTD price lookups).
+
+    Results are memoised in session_state for the life of the session so
+    repeated reruns of the same period don't re-hit the network.
+    """
+    cache: Dict[Tuple[int, int], Optional[float]] = st.session_state.setdefault(
+        "_dam_monthly_cache", {})
+    token = _get_entsoe_token()
+
+    result: Dict[Tuple[int, int], Optional[float]] = {}
+    missing = []
+    for p in dict.fromkeys(pairs):   # de-dupe, keep order
+        if p in cache:
+            result[p] = cache[p]
+        else:
+            missing.append(p)
+
+    if not missing:
+        return result
+
+    if not token:
+        for p in missing:
+            v = _get_cached_dam_price(f"{p[0]}-{p[1]:02d}")
+            cache[p] = v
+            result[p] = v
+        return result
+
+    last_err = None
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(6, len(missing))) as ex:
+        fut_map = {ex.submit(_fetch_dam_monthly_avg_uncached, y, m, token): (y, m)
+                   for (y, m) in missing}
+        for fut in concurrent.futures.as_completed(fut_map):
+            p = fut_map[fut]
+            try:
+                avg, err = fut.result()
+            except Exception as e:
+                avg, err = None, _redact_token(str(e), token)
+            ym = f"{p[0]}-{p[1]:02d}"
+            if avg is not None:
+                _cache_dam_price(ym, avg)
+            else:
+                avg = _get_cached_dam_price(ym)
+                if err:
+                    last_err = err
+            cache[p] = avg
+            result[p] = avg
+
+    if last_err:
+        st.session_state["_entsoe_last_error"] = last_err
+    return result
+
+# ── Daily production-weighted (capture-price) revenue ──────────────────────
+# Same calculation the Intraday tab shows for one day — 5-min/hourly production
+# matched against 15-min DAM prices — extracted so it can be computed in bulk
+# for the Monthly tab's revenue column and persisted to daily_revenue so
+# repeat visits (and other tabs) reuse it instead of re-fetching.
+def _compute_day_revenue_from_frames(prod_json: dict, df_dam: pd.DataFrame) -> Optional[dict]:
+    """Pure computation, no network/Streamlit calls — safe to call from anywhere."""
+    raw = prod_json.get("data", []) if prod_json else []
+    src = prod_json.get("_src", "hour") if prod_json else "hour"
+    if raw and isinstance(raw, list) and "kpiList" in (raw[0] if isinstance(raw[0], dict) else {}):
+        raw = raw[0]["kpiList"]
+    df_p = _norm(raw)
+    if df_p.empty or df_dam.empty or "price" not in df_dam.columns:
+        return None
+
+    tc = next((c for c in df_p.columns if "time" in c.lower() or "collect" in c.lower()), None)
+    yc = next((c for c in df_p.columns if "inverterYield" in c or "activePower" in c
+              or "day_cap" in c or "power" in c.lower()), None)
+    if not tc or not yc:
+        return None
+
+    df_p["dt"] = pd.to_datetime(df_p[tc], unit="ms", utc=True, errors="coerce").dt.tz_convert(PLANT_TZ)
+    df_p[yc]   = pd.to_numeric(df_p[yc], errors="coerce")
+    df_p = df_p.dropna(subset=["dt", yc]).sort_values("dt").reset_index(drop=True)
+    if len(df_p) < 2:
+        return None
+
+    median_gap   = df_p["dt"].diff().dropna().dt.total_seconds().median()
+    interval_min = int(round(median_gap / 60)) if pd.notna(median_gap) and median_gap > 0 else 60
+    if src == "hour" and len(df_p) <= 25:
+        # Mirrors the Intraday tab: hourly-fallback data can have irregular
+        # gaps (e.g. missing night-time entries) that skew the median-gap
+        # estimate upward, which directly inflates kWh — and revenue with it.
+        interval_min = 60
+
+    if interval_min > 15:
+        # Hourly-fallback data is coarser than the 15-min buckets used
+        # everywhere else (DAM prices, revenue_15min). Rather than dumping a
+        # whole hour's energy into a single 15-min bucket (spiking it to
+        # interval_min/15x the true power and leaving the other three
+        # empty), expand each hourly reading into its four constituent
+        # 15-min slots at the same kW value — the best available estimate
+        # for each quarter given only an hourly average. Total daily kWh is
+        # unaffected: 4 quarters x (V kW * 0.25h) == 1 hour x (V kW * 1h).
+        df_p = pd.concat([
+            df_p.assign(dt=df_p["dt"] + pd.Timedelta(minutes=m))
+            for m in range(0, interval_min, 15)
+        ], ignore_index=True)
+        interval_min = 15
+
+    df_p["bucket"] = df_p["dt"].dt.floor("15min")
+    bucket_prod = (df_p.groupby("bucket")[yc].sum().reset_index()
+                  .rename(columns={"bucket": "dt", yc: "kw_sum"}))
+    dr = pd.merge_asof(bucket_prod.sort_values("dt"),
+                       df_dam[["dt", "price"]].sort_values("dt"),
+                       on="dt", direction="backward", tolerance=pd.Timedelta("16min"))
+    dr["kwh"] = dr["kw_sum"] * (interval_min / 60)
+    dr["rev"] = dr["kwh"] / 1000 * dr["price"]
+
+    kwh = float(df_p[yc].sum() * interval_min / 60)
+    if kwh <= 0:
+        return None
+    revenue = float(dr["rev"].sum(skipna=True))
+    return {"kwh": kwh, "revenue_eur": revenue, "avg_price": float(df_dam["price"].mean()),
+           "buckets": dr[["dt", "kwh", "price", "rev"]].dropna(subset=["price"])}
+
+
+def _cached_revenue_days(dates: List[date]) -> Dict[str, dict]:
+    """Read whichever of `dates` already have a daily_revenue row."""
+    if not dates:
+        return {}
+    conn = _get_db()
+    placeholders = ",".join("?" * len(dates))
+    rows = conn.execute(
+        f"SELECT day,kwh,revenue_eur,avg_price FROM daily_revenue WHERE day IN ({placeholders})",
+        [str(d) for d in dates]).fetchall()
+    conn.close()
+    return {row[0]: {"kwh": row[1], "revenue_eur": row[2], "avg_price": row[3]} for row in rows}
+
+
+def _persist_day_revenue(d: date, r: dict) -> None:
+    """
+    Write one day's revenue result — as produced by
+    _compute_day_revenue_from_frames — to daily_revenue + revenue_15min.
+    This is the ONLY place either table gets written to: both
+    compute_daily_revenue_batch (Monthly tab) and the Intraday tab's save
+    action call this, so a day saved from either tab is calculated the same
+    way and lands in the same storage, instead of two independently
+    maintained copies that can silently drift apart.
+    """
+    fetched_ts = datetime.now(timezone.utc).isoformat()
+    conn = _get_db()
+    conn.execute("""INSERT OR REPLACE INTO daily_revenue
+        (day,kwh,revenue_eur,avg_price,fetched_ts) VALUES (?,?,?,?,?)""",
+        (str(d), r["kwh"], r["revenue_eur"], r["avg_price"], fetched_ts))
+    buckets = r.get("buckets")
+    if buckets is not None and not buckets.empty:
+        conn.executemany("""INSERT OR REPLACE INTO revenue_15min
+            (dt,day,kwh,price_eur_mwh,revenue_eur,fetched_ts) VALUES (?,?,?,?,?,?)""",
+            [(b["dt"].isoformat(), str(d), float(b["kwh"]), float(b["price"]),
+             float(b["rev"]), fetched_ts) for _, b in buckets.iterrows()])
+    conn.commit(); conn.close()
+
+
+def compute_daily_revenue_batch(base_url, sid, dates: List[date], xsrf, verify,
+                                request_gap_seconds: float = 30.0,
+                                on_progress=None) -> Tuple[Dict[date, dict], Dict[date, str]]:
+    """
+    Compute (or reuse cached) 15-min production-weighted revenue for several
+    days. Days already in the daily_revenue SQLite table are reused for free.
+
+    Missing days are fetched from Huawei strictly ONE AT A TIME with a
+    mandatory pause between requests — confirmed by direct reproduction that
+    Huawei's KPI endpoints (getKpiStation5min/Hour) enforce an account-wide
+    rate limit stricter than a short burst window: a single call succeeds,
+    then every subsequent call returns failCode=407 for 2+ minutes straight
+    regardless of concurrency or retries. Concurrency here would only get the
+    account rate-limited faster, not finish faster.
+
+    ENTSO-E price lookups are NOT subject to this and are still fetched via
+    the existing parallel dam_daily_batch — this constraint is specific to
+    Huawei's account.
+
+    Each day is persisted to daily_revenue/revenue_15min as soon as it's
+    computed (not batched to the end), so a run that's interrupted partway
+    through — very possible given how long this can take at a safe pace —
+    doesn't lose the days it already finished.
+
+    on_progress(day, ok, reason), if given, is called after every day
+    (cached or freshly fetched) so a caller can render live progress.
+
+    Returns (result, fail_reasons) — fail_reasons maps any day that couldn't
+    be computed to the raw failCode/message Huawei/ENTSO-E returned, so the
+    caller can tell a real rate-limit/auth failure apart from "no data".
+    """
+    if not dates:
+        return {}, {}
+    cached = _cached_revenue_days(dates)
+    result  = {d: cached[str(d)] for d in dates if str(d) in cached}
+    missing = [d for d in dates if str(d) not in cached]
+    for d in result:
+        if on_progress: on_progress(d, True, None)
+    if not missing:
+        return result, {}
+
+    dam_raw = dam_daily_batch(missing)
+    fail_reasons = {}
+
+    for idx, d in enumerate(missing):
+        pj = api_15min(base_url, sid, d, xsrf, verify) or {}
+        r = _compute_day_revenue_from_frames(pj, dam_raw.get(d, pd.DataFrame()))
+
+        if r:
+            result[d] = {"kwh": r["kwh"], "revenue_eur": r["revenue_eur"],
+                        "avg_price": r["avg_price"]}
+            _persist_day_revenue(d, r)
+            reason = None
+        else:
+            fc = pj.get("failCode")
+            msg = pj.get("message") or pj.get("msg")
+            if fc is not None or msg:
+                reason = f"failCode={fc}" + (f" — {msg}" if msg else "")
+            elif dam_raw.get(d, pd.DataFrame()).empty:
+                reason = "no ENTSO-E price data"
+            else:
+                reason = "no production data"
+            fail_reasons[d] = reason
+
+        if on_progress: on_progress(d, r is not None, reason)
+        if idx < len(missing) - 1:
+            time.sleep(request_gap_seconds)
+
+    return result, fail_reasons
 
 # ─────────────────────────────────────────────────────────────────────────────
 # ALERT ENGINE — run after every data load
@@ -810,22 +1526,25 @@ def fetch_forecast() -> pd.DataFrame:
             params={"latitude":40.694,"longitude":22.990,
                     "hourly":"shortwave_radiation,temperature_2m",
                     "timezone":"Europe/Athens","forecast_days":7},
-            timeout=10)
-        if r.status_code!=200: return pd.DataFrame()
+            timeout=15,
+            proxies=_get_proxies(),
+            verify=False)
+        if r.status_code!=200:
+            return pd.DataFrame()
         j = r.json()
         df = pd.DataFrame({"dt": pd.to_datetime(j["hourly"]["time"]),
                            "GHI_Wm2": j["hourly"]["shortwave_radiation"],
                            "T_amb":   j["hourly"]["temperature_2m"]})
         df["dt"] = df["dt"].dt.tz_localize("Europe/Athens", ambiguous="NaT",
                                            nonexistent="NaT")
-        # Simple GTI = GHI × 1.15 proxy for fixed 30° south tilt
         df["GTI_Wm2"] = df["GHI_Wm2"] * 1.15
-        # Estimated yield (kWh per hour): GTI(W/m²)/1000 × capacity × WCPR
         t_cell = df["T_amb"] + (NOCT-20)/800 * df["GTI_Wm2"]
         df["Yield_kWh"] = (df["GTI_Wm2"]/1000 * PLANT_PEAK_KW
                            * (1 + GAMMA*(t_cell-25)) * 0.78).clip(lower=0)
         return df.dropna()
-    except: return pd.DataFrame()
+    except Exception as e:
+        st.session_state["_forecast_error"] = str(e)
+        return pd.DataFrame()
 
 # ─────────────────────────────────────────────────────────────────────────────
 # DEGRADATION FIT
@@ -975,7 +1694,7 @@ def build_pdf_report(merged, df_bench, alert_rows, year) -> Optional[bytes]:
 with st.sidebar:
     st.title("☀️ FusionSolar APM")
     year_input = int(st.number_input("Analysis Year",
-                    min_value=PLANT_START_YEAR, max_value=2030, value=2025))
+                    min_value=PLANT_START_YEAR, max_value=2030, value=date.today().year))
     st.caption(f"Capacity: {PLANT_PEAK_KW:.0f} kWp | COD: {PLANT_START_YEAR}")
     st.caption("📍 Thessaloniki (PVGIS-SARAH3)")
     st.divider()
@@ -998,7 +1717,7 @@ with st.sidebar:
 # ── Tabs ──
 (t_score, t_monthly, t_intraday, t_hist,
  t_loss, t_financial, t_forecast,
- t_health, t_failure, t_opex, t_alerts, t_ipto) = st.tabs([
+ t_health, t_failure, t_opex, t_alerts, t_events, t_ipto) = st.tabs([
     "🎯 Scorecard",
     "📊 Monthly",
     "📈 Intraday",
@@ -1010,7 +1729,8 @@ with st.sidebar:
     "🩺 Failure Analytics",
     "🧾 OPEX",
     "🔔 Alerts",
-    "🔌 IPTO Diagnostics",
+    "🚨 Events",
+    "📡 ENTSO-E Diagnostics",
 ])
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1018,18 +1738,19 @@ with st.sidebar:
 # ─────────────────────────────────────────────────────────────────────────────
 with t_score:
     st.header("Executive Performance Scorecard")
-    st.caption("Live plant status — refresh to update all KPIs from the API.")
+    st.caption("Live plant status — reloads automatically on page refresh.")
 
-    if st.button("🔄 Load Scorecard", key="btn_score"):
+    def _load_scorecard(year_input):
         client, stations = ensure_client()
-        if client and stations:
-            sid = stations[0].get("stationCode") or stations[0].get("plantCode")
-
-            with st.spinner("Fetching data…"):
-                df_yr  = api_monthly(client.base_url, sid, year_input,
-                                     client.xsrf, client.verify_ssl)
-                df_py  = api_monthly(client.base_url, sid, year_input-1,
-                                     client.xsrf, client.verify_ssl)
+        if not client or not stations:
+            return
+        sid = stations[0].get("stationCode") or stations[0].get("plantCode")
+        with st.spinner("Loading scorecard…"):
+            yr_data = api_monthly_years(client.base_url, sid,
+                                        [year_input, year_input-1],
+                                        client.xsrf, client.verify_ssl)
+            df_yr = yr_data[year_input]
+            df_py = yr_data[year_input-1]
 
             if not df_yr.empty:
                 tc, ec = _resolve(df_yr)
@@ -1131,148 +1852,320 @@ with t_score:
                         on="MonthNum", how="left")
                     st.session_state["scorecard_year"] = year_input
 
+    _load_scorecard(year_input)
+
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB: MONTHLY  (production vs budget + revenue)
 # ─────────────────────────────────────────────────────────────────────────────
 with t_monthly:
     st.header("Monthly Energy vs Budget")
+    today = date.today()
 
-    if st.button("Refresh Monthly", key="btn_monthly"):
+    # Only the Huawei monthly-KPI pull is gated behind this — everything
+    # else below (revenue button, charts, table) must run on EVERY rerun,
+    # otherwise clicking any button on this tab triggers a rerun where
+    # _run_monthly is False and the whole section disappears.
+    _run_monthly = (st.button("🔄 Refresh Monthly", key="btn_monthly")
+                    or "monthly_raw" not in st.session_state
+                    or st.session_state.get("monthly_year") != year_input)
+
+    if _run_monthly:
         client, stations = ensure_client()
-        if client and stations:
-            sid = stations[0].get("stationCode") or stations[0].get("plantCode")
+        if not client or not stations:
+            st.error("❌ FusionSolar connection failed — check secrets.toml.")
+            st.stop()
+        sid = stations[0].get("stationCode") or stations[0].get("plantCode")
 
-            with st.spinner("Fetching…"):
-                df_raw = api_monthly(client.base_url, sid, year_input,
-                                     client.xsrf, client.verify_ssl)
-                df_prev= api_monthly(client.base_url, sid, year_input-1,
-                                     client.xsrf, client.verify_ssl)
+        with st.spinner("Fetching…"):
+            yr_data = api_monthly_years(client.base_url, sid,
+                                        [year_input, year_input-1],
+                                        client.xsrf, client.verify_ssl)
+            df_raw  = yr_data[year_input]
+            df_prev = yr_data[year_input-1]
 
-            if df_raw.empty:
-                st.warning("No monthly data."); st.stop()
-            tc,ec = _resolve(df_raw)
-            if not tc or not ec:
-                st.error(f"Columns: {list(df_raw.columns)}"); st.stop()
+        if df_raw.empty:
+            st.warning("No monthly data."); st.stop()
+        tc,ec = _resolve(df_raw)
+        if not tc or not ec:
+            st.error(f"Columns: {list(df_raw.columns)}"); st.stop()
 
-            df_raw["dt"]  = pd.to_datetime(df_raw[tc],unit="ms",utc=True).dt.tz_convert(PLANT_TZ)
-            df_raw["m"]   = df_raw["dt"].dt.month
-            df_raw["kWh"] = pd.to_numeric(df_raw[ec],errors="coerce")
-            bdf = get_budget(year_input)
-            merged = bdf.merge(df_raw[["m","kWh"]].rename(
-                columns={"m":"MonthNum","kWh":"Energy_kWh"}),
-                on="MonthNum", how="left")
-            merged["Delta_kWh"]     = merged["Energy_kWh"]-merged["Budget_kWh"]
-            merged["Achievement_%"] = (
-                merged["Energy_kWh"].astype(float)
-                / merged["Budget_kWh"].astype(float).where(merged["Budget_kWh"] != 0)
-                * 100
-            ).round(1)
+        df_raw["dt"]  = pd.to_datetime(df_raw[tc],unit="ms",utc=True).dt.tz_convert(PLANT_TZ)
+        df_raw["m"]   = df_raw["dt"].dt.month
+        df_raw["kWh"] = pd.to_numeric(df_raw[ec],errors="coerce")
+        bdf = get_budget(year_input)
 
-            # DAM prices
-            today = date.today()
-            dam_map={}
-            comp_m=[m for m in range(1,13) if date(year_input,m,1)<today]
-            if comp_m:
-                with st.spinner("Fetching ADMIE monthly DAM prices…"):
-                    for m in comp_m:
-                        dam_map[m]=dam_monthly_avg(year_input,m)
-            merged["Avg_DAM"]=merged["MonthNum"].map(dam_map)
-            merged["Revenue_EUR"]=merged.apply(
-                lambda r: r["Energy_kWh"]*r["Avg_DAM"]/1000
-                if pd.notna(r["Avg_DAM"]) and r["Avg_DAM"]>0
-                and pd.notna(r["Energy_kWh"]) else pd.NA, axis=1)
+        # Prorate budget for the current in-progress month
+        if year_input == today.year:
+            cur_m      = today.month
+            days_so_far = today.day
+            days_total  = calendar.monthrange(today.year, cur_m)[1]
+            mask = bdf["MonthNum"] == cur_m
+            bdf.loc[mask, "Budget_kWh"] = (
+                bdf.loc[mask, "Budget_kWh"] * days_so_far / days_total
+            ).round(0)
+        merged = bdf.merge(df_raw[["m","kWh"]].rename(
+            columns={"m":"MonthNum","kWh":"Energy_kWh"}),
+            on="MonthNum", how="left")
+        merged["Delta_kWh"]     = merged["Energy_kWh"]-merged["Budget_kWh"]
+        merged["Achievement_%"] = (
+            merged["Energy_kWh"].astype(float)
+            / merged["Budget_kWh"].astype(float).where(merged["Budget_kWh"] != 0)
+            * 100
+        ).round(1)
 
-            # Rolling 12-mo
-            frames=[]
-            for df_y,yr_l in [(df_prev,year_input-1),(df_raw,year_input)]:
-                if df_y.empty: continue
-                t2,e2=_resolve(df_y)
-                if t2 and e2:
-                    tmp=df_y[[t2,e2]].copy(); tmp.columns=["ts","kWh"]
-                    tmp["dt"]=pd.to_datetime(tmp["ts"],unit="ms",utc=True).dt.tz_convert(PLANT_TZ)
-                    tmp["m"]=tmp["dt"].dt.month; tmp["yr"]=yr_l
-                    tmp["kWh"]=pd.to_numeric(tmp["kWh"],errors="coerce")
-                    frames.append(tmp)
+        # Rolling 12-mo source frames
+        frames=[]
+        for df_y,yr_l in [(df_prev,year_input-1),(df_raw,year_input)]:
+            if df_y.empty: continue
+            t2,e2=_resolve(df_y)
+            if t2 and e2:
+                tmp=df_y[[t2,e2]].copy(); tmp.columns=["ts","kWh"]
+                tmp["dt"]=pd.to_datetime(tmp["ts"],unit="ms",utc=True).dt.tz_convert(PLANT_TZ)
+                tmp["m"]=tmp["dt"].dt.month; tmp["yr"]=yr_l
+                tmp["kWh"]=pd.to_numeric(tmp["kWh"],errors="coerce")
+                frames.append(tmp)
 
-            # Chart
-            fig=go.Figure()
-            fig.add_bar(x=merged["Month"],y=merged["Budget_kWh"],
-                        name="Budget",marker_color="#334155")
-            fig.add_bar(x=merged["Month"],y=merged["Energy_kWh"],
-                        name="Actual",marker_color="#f0b429")
-            if frames:
-                dc=pd.concat(frames).sort_values("dt").reset_index(drop=True)
-                dc["Roll12"]=dc["kWh"].rolling(12,min_periods=3).mean()
-                dy=dc[dc["yr"]==year_input]
-                if not dy.empty:
-                    fig.add_scatter(x=[MONTH_LABELS[m-1] for m in dy["m"]],
-                                    y=dy["Roll12"].values,
-                                    mode="lines+markers",name="12-mo Rolling",
-                                    line=dict(color="#f472b6",width=2.5,dash="dot"))
-            _base_layout(fig,f"{year_input} Monthly Energy vs Budget",
-                         "Month","kWh",barmode="group")
-            st.plotly_chart(fig,use_container_width=True)
+        st.session_state["monthly_raw"]    = merged     # pre-revenue, cached
+        st.session_state["monthly_frames"] = frames
+        st.session_state["monthly_year"]   = year_input
 
-            # Delta chart
-            dc2=[("🟢" if v>=0 else "🔴","#4ade80" if v>=0 else "#ff5f5f")
-                 for v in merged["Delta_kWh"].fillna(0)]
-            fig2=go.Figure(go.Bar(x=merged["Month"],y=merged["Delta_kWh"],
-                marker_color=[c[1] for c in dc2],name="Δ vs Budget"))
-            _base_layout(fig2,"Monthly Delta (Actual − Budget)","Month","kWh")
-            st.plotly_chart(fig2,use_container_width=True)
+    if "monthly_raw" not in st.session_state:
+        st.info("Loading…"); st.stop()
 
-            # Summary table
-            has_dam=merged["Avg_DAM"].notna().any()
-            dcols=["Month","Budget_kWh","Energy_kWh","Delta_kWh","Achievement_%"]
-            fmt={"Budget_kWh":"{:,.0f}","Energy_kWh":"{:,.0f}",
-                 "Delta_kWh":"{:+,.0f}","Achievement_%":"{:.1f}%"}
-            if has_dam:
-                dcols+=["Avg_DAM","Revenue_EUR"]
-                fmt["Avg_DAM"]="{:.2f}"; fmt["Revenue_EUR"]="{:,.0f}"
-                merged=merged.rename(columns={"Avg_DAM":"Avg DAM (€/MWh)",
-                                              "Revenue_EUR":"Revenue (€)"})
-                dcols=[c if c not in("Avg_DAM","Revenue_EUR")
-                       else("Avg DAM (€/MWh)" if c=="Avg_DAM" else "Revenue (€)")
-                       for c in dcols]
-                ytd_rev=merged["Revenue (€)"].sum(skipna=True)
-                st.metric("YTD Estimated Revenue",f"€ {ytd_rev:,.0f}")
+    merged = st.session_state["monthly_raw"].copy()
+    frames = st.session_state["monthly_frames"]
 
-            st.subheader("Summary Table")
-            st.dataframe(merged[dcols].style.format(fmt,na_rep="—"),
-                         use_container_width=True)
+    # Revenue — single method: Σ (15-min ENTSO-E price × generation in that
+    # 15-min period), summed per day then rolled up to months. No
+    # average-price shortcut, no fallback — a month is either computed this
+    # way or shows as not-yet-computed. Runs every rerun (not gated behind
+    # _run_monthly) so the button below actually works.
+    elapsed_days=[date(year_input,m,d)
+                 for m in range(1,13)
+                 for d in range(1,calendar.monthrange(year_input,m)[1]+1)
+                 if date(year_input,m,d)<today]
+    # SQLite (daily_revenue) is the single source of truth for what's been
+    # computed — NOT session_state. A day written to the DB last week, last
+    # session, or by any other process (a backfill script, another browser
+    # tab) must show up here immediately. Previously this table's rollup was
+    # built from a session_state dict that only accumulated whatever THIS
+    # browser session had explicitly fetched, so a fresh session showed a
+    # fully-cached month (e.g. January, 31/31 in the DB) as mostly missing —
+    # that's the "8/31" bug.
+    cached_days=_cached_revenue_days(elapsed_days)
+    new_days=[d for d in elapsed_days if str(d) not in cached_days]
 
-            # PDF download
-            conn=_get_db()
-            alert_rows=conn.execute(
-                "SELECT * FROM alerts ORDER BY ts DESC LIMIT 20").fetchall()
-            conn.close()
-            pvg=pvgis_df([year_input],ref_pr)
-            merged2=merged.rename(columns={"Energy_kWh_x":"Energy_kWh"}) \
-                if "Energy_kWh_x" in merged.columns else merged
-            pdf_bytes=build_pdf_report(merged2, pvg, alert_rows, year_input)
-            if pdf_bytes:
-                st.download_button("📥 Download PDF Report",pdf_bytes,
-                    file_name=f"APM_Report_{year_input}.pdf",
-                    mime="application/pdf")
+    st.caption(
+        "Revenue = Σ (15-min ENTSO-E price × generation in that period), summed per day. "
+        f"{len(cached_days)}/{len(elapsed_days)} elapsed day(s) already computed & cached."
+    )
+    if new_days:
+        pc1,pc2,pc3=st.columns([1,1,1.4])
+        with pc1:
+            pace=st.number_input("Seconds between requests",min_value=5,max_value=300,
+                                 value=30,step=5,key="rev_pace",
+                                 help="Huawei's KPI API rate-limits hard (confirmed: even "
+                                      "30s spacing still failed ~29/30 requests in testing). "
+                                      "Lower this only if you've confirmed a shorter gap "
+                                      "reliably works for your account.")
+        with pc2:
+            day_cap=st.number_input("Days this run",min_value=1,
+                                    max_value=len(new_days),
+                                    value=min(20,len(new_days)),step=5,key="rev_cap")
+        with pc3:
+            est_min=day_cap*pace/60
+            st.caption(f"~{est_min:.0f} min for {day_cap} day(s) "
+                      f"({len(new_days)} total not yet computed).")
+        compute_15min=st.button("📊 Compute Revenue",key="btn_15min_rev")
+    else:
+        compute_15min=False
+        st.caption("✅ All elapsed days already computed.")
+
+    if compute_15min and new_days:
+        client, stations = ensure_client()
+        if not client or not stations:
+            st.error("❌ FusionSolar connection failed — check secrets.toml.")
+            st.stop()
+        sid = stations[0].get("stationCode") or stations[0].get("plantCode")
+        todo=new_days[:int(day_cap)]
+        prog=st.progress(0.0,f"0/{len(todo)} days…")
+        status=st.empty()
+        counts={"done":0}
+        def _on_progress(d,ok,reason):
+            counts["done"]+=1
+            prog.progress(counts["done"]/len(todo),f"{counts['done']}/{len(todo)} days")
+            status.caption(("✅ " if ok else "❌ ") + str(d) + (f" — {reason}" if reason else ""))
+        # Fetched strictly one day at a time inside compute_daily_revenue_batch
+        # (see its docstring) and persisted to SQLite as each day completes —
+        # so even a run that stalls partway has already saved its progress.
+        chunk_result,fail_reasons=compute_daily_revenue_batch(
+            client.base_url,sid,todo,client.xsrf,client.verify_ssl,
+            request_gap_seconds=float(pace),on_progress=_on_progress)
+        prog.empty(); status.empty()
+
+        n_new_ok=sum(1 for d in todo if d in chunk_result)
+        if not fail_reasons:
+            st.success(f"✅ Computed {n_new_ok} new day(s) this run.")
+        else:
+            st.info(f"Computed {n_new_ok} new day(s); {len(fail_reasons)} failed this run.")
+        if fail_reasons:
+            with st.expander(f"⚠️ {len(fail_reasons)}/{len(todo)} day(s) failed — reasons"):
+                for d in sorted(fail_reasons):
+                    st.write(f"**{d}**: {fail_reasons[d]}")
+            if len(fail_reasons)==len(todo):
+                st.warning(
+                    "Every day in this run failed — almost certainly still "
+                    "rate-limited from a previous run. Try again later with a "
+                    "longer pace, or wait a while before retrying."
+                )
+        # Re-read from SQLite so the table below reflects what this run just wrote.
+        cached_days=_cached_revenue_days(elapsed_days)
+
+    if cached_days:
+        df_dr=pd.DataFrame([
+            {"MonthNum":d.month,"kwh":cached_days[str(d)]["kwh"],
+             "revenue_eur":cached_days[str(d)]["revenue_eur"]}
+            for d in elapsed_days if str(d) in cached_days])
+        mo_rev=df_dr.groupby("MonthNum").agg(
+            Revenue_EUR=("revenue_eur","sum"),
+            Energy_15min_kWh=("kwh","sum"),
+            Days_Computed=("kwh","count")).reset_index()
+        elapsed_by_month=(pd.Series([d.month for d in elapsed_days], name="MonthNum")
+                          .value_counts().rename_axis("MonthNum")
+                          .reset_index(name="Days_Elapsed"))
+        merged=merged.merge(mo_rev,on="MonthNum",how="left")
+        merged=merged.merge(elapsed_by_month,on="MonthNum",how="left")
+        merged["CapturePrice"]=(merged["Revenue_EUR"]
+                                / merged["Energy_15min_kWh"] * 1000)
+        # A month with e.g. 1/24 days computed shows a real but tiny partial
+        # sum in Revenue (€) — without this it reads as a complete monthly
+        # total and looks like a bug when spot-checked against Intraday.
+        merged["Coverage"]=merged.apply(
+            lambda r: f"{int(r['Days_Computed'])}/{int(r['Days_Elapsed'])}"
+            if pd.notna(r.get("Days_Computed")) and pd.notna(r.get("Days_Elapsed"))
+            and r["Days_Elapsed"]>0 else "—", axis=1)
+        n_partial=int(((merged["Days_Computed"]<merged["Days_Elapsed"])
+                       & merged["Days_Computed"].notna()).sum())
+        st.caption(f"✅ Revenue computed for {len(cached_days)} day(s) total, cached. "
+                  + (f"⚠️ {n_partial} month(s) below only show a **partial** sum "
+                     "— check the Coverage column." if n_partial else ""))
+    else:
+        merged["Revenue_EUR"]=pd.NA
+        merged["CapturePrice"]=pd.NA
+
+    # Chart
+    fig=go.Figure()
+    fig.add_bar(x=merged["Month"],y=merged["Budget_kWh"],
+                name="Budget",marker_color="#334155")
+    fig.add_bar(x=merged["Month"],y=merged["Energy_kWh"],
+                name="Actual",marker_color="#f0b429")
+    if frames:
+        dc=pd.concat(frames).sort_values("dt").reset_index(drop=True)
+        dc["Roll12"]=dc["kWh"].rolling(12,min_periods=3).mean()
+        dy=dc[dc["yr"]==year_input]
+        if not dy.empty:
+            fig.add_scatter(x=[MONTH_LABELS[m-1] for m in dy["m"]],
+                            y=dy["Roll12"].values,
+                            mode="lines+markers",name="12-mo Rolling",
+                            line=dict(color="#f472b6",width=2.5,dash="dot"))
+    _base_layout(fig,f"{year_input} Monthly Energy vs Budget",
+                 "Month","kWh",barmode="group")
+    if year_input == today.year:
+        st.caption(
+            f"📅 **{MONTH_LABELS[today.month-1]} budget prorated** to day "
+            f"{today.day} of {calendar.monthrange(today.year,today.month)[1]} "
+            f"({today.day/calendar.monthrange(today.year,today.month)[1]:.0%} of month)."
+        )
+    st.plotly_chart(fig,use_container_width=True)
+
+    # Delta chart
+    dc2=[("🟢" if v>=0 else "🔴","#4ade80" if v>=0 else "#ff5f5f")
+         for v in merged["Delta_kWh"].fillna(0)]
+    fig2=go.Figure(go.Bar(x=merged["Month"],y=merged["Delta_kWh"],
+        marker_color=[c[1] for c in dc2],name="Δ vs Budget"))
+    _base_layout(fig2,"Monthly Delta (Actual − Budget)","Month","kWh")
+    st.plotly_chart(fig2,use_container_width=True)
+
+    # Summary table
+    has_rev=merged["Revenue_EUR"].notna().any()
+    dcols=["Month","Budget_kWh","Energy_kWh","Delta_kWh","Achievement_%"]
+    fmt={"Budget_kWh":"{:,.0f}","Energy_kWh":"{:,.0f}",
+         "Delta_kWh":"{:+,.0f}","Achievement_%":"{:.1f}%"}
+    if has_rev:
+        rename_map={"Revenue_EUR":"Revenue (€)",
+                   "CapturePrice":"Capture Price (€/MWh)",
+                   "Coverage":"Days Computed"}
+        merged=merged.rename(columns=rename_map)
+        dcols+=["Days Computed","Capture Price (€/MWh)","Revenue (€)"]
+        fmt["Capture Price (€/MWh)"]="{:.2f}"
+        fmt["Revenue (€)"]="{:,.0f}"
+        ytd_rev=merged["Revenue (€)"].sum(skipna=True)
+        st.metric("YTD Revenue",f"€ {ytd_rev:,.0f}",
+                  help="Σ (15-min ENTSO-E price × generation) for months "
+                       "you've computed. Months not yet computed show as "
+                       "\"—\" — click 📊 Compute Revenue above. Check the "
+                       "Days Computed column — a month showing e.g. 1/24 has "
+                       "a real but tiny partial sum, not a wrong total.")
+
+    st.subheader("Summary Table")
+    st.dataframe(merged[dcols].style.format(fmt,na_rep="—"),
+                 use_container_width=True)
+
+    # PDF download
+    conn=_get_db()
+    alert_rows=conn.execute(
+        "SELECT * FROM alerts ORDER BY ts DESC LIMIT 20").fetchall()
+    conn.close()
+    pvg=pvgis_df([year_input],ref_pr)
+    merged2=merged.rename(columns={"Energy_kWh_x":"Energy_kWh"}) \
+        if "Energy_kWh_x" in merged.columns else merged
+    pdf_bytes=build_pdf_report(merged2, pvg, alert_rows, year_input)
+    if pdf_bytes:
+        st.download_button("📥 Download PDF Report",pdf_bytes,
+            file_name=f"APM_Report_{year_input}.pdf",
+            mime="application/pdf")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB: INTRADAY  (15-min + DAM price dual-axis)
 # ─────────────────────────────────────────────────────────────────────────────
 with t_intraday:
-    st.header("15-min Production vs Day-Ahead Price")
+    st.header("15-min Production vs 15-min Day-Ahead Price")
     c1,c2 = st.columns([2,1])
     with c1:
-        tgt_date=st.date_input("Day",value=date.today()-timedelta(days=1),
+        tgt_date=st.date_input("Day",value=date.today(),
                                key="id_date")
     with c2:
         show_rev=st.checkbox("Show revenue curve",value=True)
 
-    if st.button("Generate",key="btn_id"):
+    _run_intraday = (st.button("🔄 Generate", key="btn_id")
+                     or "intraday_date" not in st.session_state
+                     or st.session_state.get("intraday_date") != str(tgt_date))
+
+    if _run_intraday:
+        st.session_state["intraday_date"] = str(tgt_date)
+
+        # Prefer the local Excel exports over the live API: getKpiStation5min
+        # doesn't exist for this account (HTTP 404, not just rate-limited),
+        # so a live call can never do better than hourly-fallback resolution,
+        # and getKpiStationHour is itself frequently rate-limited on top of
+        # that. The local files are genuinely native 15-min per-inverter
+        # readings — strictly better whenever they cover the requested day.
+        jq = _local_prod_json_for_day(tgt_date)
+        used_local = jq is not None
+
         client, stations = ensure_client()
-        if client and stations:
-            sid=stations[0].get("stationCode") or stations[0].get("plantCode")
-            with st.spinner("Fetching 15-min data…"):
-                jq=api_15min(client.base_url,sid,tgt_date,client.xsrf,client.verify_ssl)
+        if not client or not stations:
+            if not used_local:
+                st.error("❌ FusionSolar connection failed — check secrets.toml.")
+                st.stop()
+            st.warning("⚠️ FusionSolar connection failed (event markers won't be shown) — "
+                      "continuing with local Excel production data.")
+        if used_local or (client and stations):
+            sid = (stations[0].get("stationCode") or stations[0].get("plantCode")
+                  if stations else None)
+            if not used_local:
+                with st.spinner("Fetching production data…"):
+                    jq=api_15min(client.base_url,sid,tgt_date,client.xsrf,client.verify_ssl)
             with st.spinner("Fetching DAM prices…"):
                 df_dam=dam_daily(tgt_date)
 
@@ -1294,100 +2187,266 @@ with t_intraday:
             df_p[yc]=pd.to_numeric(df_p[yc],errors="coerce")
             df_p=df_p.sort_values("dt").reset_index(drop=True)
 
-            if src=="hour" and len(df_p)<=25:
-                df_p=(df_p.set_index("dt")[[yc]].resample("15min").asfreq()
-                      [yc].interpolate("linear").reset_index())
-                df_p.columns=["dt",yc]
-                st.caption("⚠️ Upsampled from hourly (15-min endpoint unavailable).")
+            if len(df_p) >= 2:
+                median_gap = df_p["dt"].diff().dropna().dt.total_seconds().median()
+                interval_min = int(round(median_gap / 60))
             else:
-                st.caption(f"✅ Native 15-min resolution ({len(df_p)} intervals).")
+                interval_min = 5
 
-            dam_ok=not df_dam.empty and "price" in df_dam.columns
-            fig=make_subplots(specs=[[{"secondary_y":True}]])
-            fig.add_trace(go.Scatter(x=df_p["dt"],y=df_p[yc],fill="tozeroy",
-                line=dict(color="#f0b429",width=2),
-                fillcolor="rgba(240,180,41,0.12)",
-                name="Production (kWh)"),secondary_y=False)
+            if used_local:
+                st.caption(f"📁 Using local Excel export (native {interval_min}-min, "
+                          f"{len(df_p)} intervals) — 3 inverters summed.")
+            elif src=="hour" and len(df_p)<=25:
+                st.caption("⚠️ Live API data is hourly (5-min endpoint unavailable for this "
+                          "account) — chart below is still shown at 15-min resolution by "
+                          "repeating each hour's average across its four quarters.")
+                interval_min = 60
+            else:
+                st.caption(f"✅ Native {interval_min}-min resolution ({len(df_p)} intervals) — bucketed to 15-min for the chart below.")
 
-            if dam_ok:
-                src_lbl="SMP €/MWh" if "ISP" in str(df_dam.get("_src",["DAM"])) else "DAM MCP €/MWh"
-                fig.add_trace(go.Scatter(x=df_dam["dt"],y=df_dam["price"],
-                    mode="lines",line=dict(color="#3ecfcf",width=2,shape="hv"),
-                    name=src_lbl),secondary_y=True)
+            # Chart always renders at 15-min resolution regardless of native
+            # cadence. Sub-15-min data (5-min) is averaged down into each
+            # 15-min bucket. Hourly-fallback data is coarser than 15-min, so
+            # instead of dumping a whole hour's energy into one bucket (which
+            # would spike that bucket to 4x true power and leave the other
+            # three empty), each hourly reading is expanded into its four
+            # constituent 15-min slots at the SAME kW value — the best
+            # available estimate for each quarter given only an hourly
+            # average — before bucketing.
+            if interval_min > 15:
+                df_p_exp = pd.concat([
+                    df_p.assign(dt=df_p["dt"] + pd.Timedelta(minutes=m))
+                    for m in range(0, interval_min, 15)
+                ], ignore_index=True)
+            else:
+                df_p_exp = df_p
+            df_p_exp["_bucket"] = df_p_exp["dt"].dt.floor("15min")
+            bucket_kw = (df_p_exp.groupby("_bucket")[yc].mean().reset_index()
+                        .rename(columns={"_bucket": "dt", yc: "kw_avg"}))
 
-                if show_rev:
-                    dr=pd.merge_asof(df_p[["dt",yc]].sort_values("dt"),
-                                     df_dam[["dt","price"]].sort_values("dt"),
-                                     on="dt",direction="nearest",
-                                     tolerance=pd.Timedelta("8min"))
-                    dr["rev"]=dr[yc]*dr["price"]/1000
-                    fig.add_trace(go.Scatter(x=dr["dt"],y=dr["rev"],mode="lines",
-                        line=dict(color="#a78bfa",width=1.5,dash="dot"),
-                        name="Revenue (€/interval)"),secondary_y=True)
+            dam_ok = not df_dam.empty and "price" in df_dam.columns
 
-                    tot_rev=dr["rev"].sum(); tot_kwh=dr[yc].sum()
-                    avg_p=df_dam["price"].mean(); pk_p=df_dam["price"].max()
-                    hi_thr=df_dam["price"].quantile(0.75)
-                    hi_pct=(dr.loc[dr["price"]>=hi_thr,yc].sum()/tot_kwh*100
-                            if tot_kwh>0 else 0)
-                    m1,m2,m3,m4=st.columns(4)
-                    m1.metric("Total Production",f"{tot_kwh:,.0f} kWh")
-                    m2.metric("Est. Revenue",f"€ {tot_rev:,.1f}")
-                    m3.metric("Avg DAM Price",f"{avg_p:.1f} €/MWh")
-                    m4.metric("Peak DAM Price",f"{pk_p:.1f} €/MWh")
-                    if tot_kwh>0:
-                        st.caption(f"📊 {hi_pct:.1f}% of production in top-quartile "
-                                   f"price window (≥{hi_thr:.1f} €/MWh).")
+            if dam_ok and show_rev:
+                # The core figures (kwh/revenue_eur/avg_price + the 15-min
+                # bucket breakdown) come from the SAME function the Monthly
+                # tab's batch compute uses — this tab must never maintain its
+                # own independent copy of that formula again.
+                r = _compute_day_revenue_from_frames(jq, df_dam)
+                if r:
+                    dr       = r["buckets"]   # columns: dt, kwh, price, rev
+                    tot_kwh  = r["kwh"]
+                    tot_rev  = r["revenue_eur"]
+                    avg_p    = r["avg_price"]
+                    pk_p     = df_dam["price"].max()
+                    hi_thr   = df_dam["price"].quantile(0.75)
 
-                    # Capture rate
-                    cap_price=(dr[yc]*dr["price"]).sum()/dr[yc].sum() if dr[yc].sum()>0 else np.nan
-                    cap_rate=cap_price/avg_p if avg_p>0 else np.nan
+                    # Capture price/rate and top-quartile % are Intraday-only
+                    # presentation extras (full-resolution, not bucketed) —
+                    # not part of the stored figure, so fine to compute
+                    # separately from the shared calc above.
+                    df_dam_s = df_dam[["dt","price"]].sort_values("dt")
+                    dr_full = pd.merge_asof(df_p[["dt",yc]].sort_values("dt"),
+                                            df_dam_s, on="dt", direction="backward",
+                                            tolerance=pd.Timedelta("16min"))
+                    cap_price = ((dr_full[yc] * dr_full["price"]).sum() /
+                                 dr_full[yc].sum()) if dr_full[yc].sum() > 0 else np.nan
+                    cap_rate  = cap_price / avg_p if avg_p > 0 else np.nan
+                    hi_pct    = (dr_full.loc[dr_full["price"] >= hi_thr, yc].sum()
+                                 / dr_full[yc].sum() * 100
+                                 if dr_full[yc].sum() > 0 else 0)
+
+                    m1,m2,m3,m4 = st.columns(4)
+                    m1.metric("Total Production", f"{tot_kwh:,.0f} kWh")
+                    m2.metric("Est. Revenue",      f"€ {tot_rev:,.1f}")
+                    m3.metric("Avg DAM Price",     f"{avg_p:.1f} €/MWh")
+                    m4.metric("Peak DAM Price",    f"{pk_p:.1f} €/MWh")
+                    st.caption(f"📊 {hi_pct:.1f}% of production in top-quartile price "
+                               f"window (≥{hi_thr:.1f} €/MWh).")
                     st.info(f"💡 **Capture Price:** {cap_price:.2f} €/MWh  |  "
                             f"**Capture Rate:** {cap_rate:.1%}  "
                             f"(1.0 = perfectly aligned with market)")
+
+                    # Store the exact shared-calc result (including buckets)
+                    # so the save button below persists identically to how
+                    # compute_daily_revenue_batch would for this same day.
+                    st.session_state["intraday_result"] = dict(
+                        day=str(tgt_date), kwh=tot_kwh, revenue_eur=tot_rev,
+                        avg_price=avg_p, buckets=dr, interval_min=interval_min)
+                else:
+                    st.info("Could not compute revenue for this day — "
+                           "production/price data didn't line up.")
+
+            fig=make_subplots(specs=[[{"secondary_y":True}]])
+            fig.add_trace(go.Scatter(
+                x=bucket_kw["dt"], y=bucket_kw["kw_avg"], fill="tozeroy",
+                line=dict(color="#f0b429", width=1.5, shape="hv"),
+                fillcolor="rgba(240,180,41,0.12)",
+                name="Production (kW, 15-min)"),
+                secondary_y=False)
+
+            if dam_ok:
+                fig.add_trace(go.Scatter(
+                    x=df_dam["dt"], y=df_dam["price"],
+                    mode="lines", line=dict(color="#3ecfcf", width=2, shape="hv"),
+                    name="SMP €/MWh"),
+                    secondary_y=True)
+                if show_rev and "dr" in locals():
+                    fig.add_trace(go.Bar(
+                        x=dr["dt"], y=dr["rev"],
+                        marker_color="rgba(167,139,250,0.5)",
+                        name="Revenue (€/15-min)"),
+                        secondary_y=True)
             else:
                 st.info("DAM prices unavailable — production curve only.")
 
-            _dual_layout(fig,f"15-min Production & DAM Price — {tgt_date}",
-                "⚡ Production (kWh)","💰 Price (€/MWh) · Revenue (€)")
-            st.plotly_chart(fig,use_container_width=True)
+            events = pd.DataFrame()
+            if client and stations:
+                with st.spinner("Fetching FusionSolar events…"):
+                    ev_raw = api_alarms_range(client.base_url, sid, tgt_date, tgt_date,
+                                              client.xsrf, client.verify_ssl)
+                    events = normalize_alarms(ev_raw)
+                if not events.empty:
+                    _add_event_markers(fig, events)
 
-            with st.expander("📋 15-min Data Table"):
-                if dam_ok:
-                    ds2=pd.merge_asof(df_p[["dt",yc]].sort_values("dt"),
-                                      df_dam[["dt","price"]].sort_values("dt"),
-                                      on="dt",direction="nearest",
-                                      tolerance=pd.Timedelta("8min"))
-                    ds2["rev"]=ds2[yc]*ds2["price"]/1000
-                    ds2["Time"]=ds2["dt"].dt.strftime("%H:%M")
-                    st.dataframe(ds2[["Time",yc,"price","rev"]].rename(columns={
-                        yc:"Production",
-                        "price":"DAM (€/MWh)","rev":"Revenue (€)"}
-                    ).style.format({"Production":"{:,.2f}","DAM (€/MWh)":"{:.2f}",
-                                    "Revenue (€)":"{:.3f}"}),
-                        use_container_width=True,hide_index=True)
+            _dual_layout(fig,
+                f"Production (15-min kW) & DAM Price (15-min) — {tgt_date}",
+                f"⚡ Production (kW)",
+                "💰 Price (€/MWh)  ·  Revenue (€/15-min)")
+
+            # Anchor both y-axes at 0 explicitly — rangemode="tozero" (set in
+            # _dual_layout) only guarantees zero is *included*, not that it's
+            # the axis edge, so on the secondary axis in particular the price
+            # line could otherwise float above a non-zero bottom.
+            power_max = bucket_kw["kw_avg"].max() if not bucket_kw.empty else 0
+            fig.update_yaxes(range=[0, power_max * 1.1 if power_max > 0 else 1],
+                             secondary_y=False)
+            if dam_ok:
+                right_series = [df_dam["price"]]
+                if show_rev and "dr" in locals():
+                    right_series.append(dr["rev"])
+                right_all = pd.concat(right_series)
+                right_lo = min(0, right_all.min())
+                right_hi = right_all.max() * 1.1 if right_all.max() > 0 else 1
+                fig.update_yaxes(range=[right_lo, right_hi], secondary_y=True)
+
+            st.plotly_chart(fig, use_container_width=True)
+            if not events.empty:
+                st.caption(f"⚠️ {len(events)} FusionSolar event(s) on {tgt_date} — "
+                          "hover the diamond markers near the baseline for details.")
+
+            with st.expander("📋 15-min Revenue Breakdown"):
+                if dam_ok and show_rev and "dr" in locals():
+                    disp = dr[["dt","kwh","price","rev"]].copy()
+                    disp["Time"] = disp["dt"].dt.strftime("%H:%M")
+                    st.dataframe(
+                        disp[["Time","kwh","price","rev"]].rename(columns={
+                            "kwh":    "Energy (kWh)",
+                            "price":  "SMP (€/MWh)",
+                            "rev":    "Revenue (€)"
+                        }).style.format({
+                            "Energy (kWh)":  "{:.3f}",
+                            "SMP (€/MWh)":   "{:.2f}",
+                            "Revenue (€)":   "{:.4f}"
+                        }),
+                        use_container_width=True, hide_index=True)
+
+    # ── Store daily revenue ───────────────────────────────────────────────────
+    st.divider()
+    res = st.session_state.get("intraday_result")
+    if res:
+        st.caption(f"Last calculated: **{res['day']}** — "
+                   f"{res['kwh']:,.0f} kWh · €{res['revenue_eur']:,.2f}")
+        if st.button("💾 Save daily revenue to log", key="btn_extract"):
+            # Same persistence path compute_daily_revenue_batch uses — writes
+            # daily_revenue AND revenue_15min, so a day saved from Intraday
+            # is indistinguishable from one computed via the Monthly tab.
+            _persist_day_revenue(date.fromisoformat(res["day"]), {
+                "kwh": res["kwh"], "revenue_eur": res["revenue_eur"],
+                "avg_price": res["avg_price"], "buckets": res["buckets"]})
+            st.success(f"✅ Saved {res['day']} to revenue log.")
+
+    # ── Revenue calendar ──────────────────────────────────────────────────────
+    st.divider()
+    st.subheader("📅 Daily Revenue Calendar")
+    today = date.today()
+    cal_months = [(today.year, today.month)]
+    prev_m = today.month - 1 or 12
+    prev_y = today.year if today.month > 1 else today.year - 1
+    cal_months = [(prev_y, prev_m), (today.year, today.month)]
+
+    conn = _get_db()
+    rev_rows = conn.execute(
+        "SELECT day, kwh, revenue_eur, avg_price FROM daily_revenue ORDER BY day"
+    ).fetchall()
+    conn.close()
+
+    rev_map = {r[0]: {"kwh": r[1], "rev": r[2], "price": r[3]} for r in rev_rows}
+
+    for cal_yr, cal_mo in cal_months:
+        st.markdown(f"**{calendar.month_name[cal_mo]} {cal_yr}**")
+        first_wd, n_days = calendar.monthrange(cal_yr, cal_mo)
+        # Header
+        cols = st.columns(7)
+        for i, dn in enumerate(["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]):
+            cols[i].markdown(f"<center><small>{dn}</small></center>",
+                             unsafe_allow_html=True)
+        # Blanks before first day
+        day_num = 1
+        cells = [""] * first_wd
+        while day_num <= n_days:
+            d_str = f"{cal_yr}-{cal_mo:02d}-{day_num:02d}"
+            r = rev_map.get(d_str)
+            if r:
+                cells.append(f"**{day_num}**\n\n€{r['rev']:.0f}")
+            else:
+                cells.append(str(day_num))
+            day_num += 1
+        # Pad to full weeks
+        while len(cells) % 7:
+            cells.append("")
+        # Render rows
+        for row_start in range(0, len(cells), 7):
+            row_cells = cells[row_start:row_start+7]
+            cols = st.columns(7)
+            for i, cell in enumerate(row_cells):
+                if cell:
+                    cols[i].markdown(cell)
+        st.caption(f"Monthly total: **€{sum(v['rev'] for k,v in rev_map.items() if k.startswith(f'{cal_yr}-{cal_mo:02d}')):.0f}**")
+        st.divider()
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB: HISTORICAL  (multi-year, PR, WCPR, degradation, irradiance)
 # ─────────────────────────────────────────────────────────────────────────────
 with t_hist:
     st.header("Historical Performance Deep-Dive")
-    all_years=list(range(PLANT_START_YEAR,date.today().year+1))
+    all_years=list(range(max(PLANT_START_YEAR, 2025), date.today().year+1))
     hist_years=st.multiselect("Years",options=all_years,default=all_years)
 
     if not hist_years:
         st.info("Select years above.")
     elif st.button("Load Historical Data",key="btn_hist"):
         client, stations = ensure_client()
+        if not client or not stations:
+            st.error("❌ FusionSolar connection failed — check secrets.toml.")
+            st.stop()
         if client and stations:
             sid=stations[0].get("stationCode") or stations[0].get("plantCode")
             frames=[]
+            sorted_years=sorted(hist_years)
             prog=st.progress(0,"Fetching…")
-            for i,yr in enumerate(sorted(hist_years)):
-                df_y=api_monthly(client.base_url,sid,yr,client.xsrf,client.verify_ssl)
-                if not df_y.empty:
-                    df_y=df_y.copy(); df_y["_yr"]=yr; frames.append(df_y)
-                prog.progress((i+1)/len(hist_years),f"Fetched {yr}")
+            done=0
+            with concurrent.futures.ThreadPoolExecutor(max_workers=min(4,len(sorted_years))) as ex:
+                fut_map={ex.submit(api_monthly,client.base_url,sid,yr,
+                                   client.xsrf,client.verify_ssl):yr for yr in sorted_years}
+                for fut in concurrent.futures.as_completed(fut_map):
+                    yr=fut_map[fut]
+                    df_y=fut.result()
+                    if not df_y.empty:
+                        df_y=df_y.copy(); df_y["_yr"]=yr; frames.append(df_y)
+                    done+=1
+                    prog.progress(done/len(sorted_years),f"Fetched {yr}")
+            frames.sort(key=lambda f: f["_yr"].iloc[0])
             prog.empty()
             if not frames: st.warning("No data."); st.stop()
 
@@ -1588,6 +2647,9 @@ with t_loss:
 
     if st.button("Compute Loss Cascade",key="btn_loss"):
         client, stations = ensure_client()
+        if not client or not stations:
+            st.error("❌ FusionSolar connection failed — check secrets.toml.")
+            st.stop()
         if client and stations:
             sid=stations[0].get("stationCode") or stations[0].get("plantCode")
             with st.spinner("Fetching…"):
@@ -1677,14 +2739,22 @@ with t_financial:
 
     if st.button("Load Financial Data",key="btn_fin"):
         client, stations = ensure_client()
+        if not client or not stations:
+            st.error("❌ FusionSolar connection failed — check secrets.toml.")
+            st.stop()
         if client and stations:
             sid=stations[0].get("stationCode") or stations[0].get("plantCode")
-            all_years=list(range(PLANT_START_YEAR,date.today().year+1))
+            today=date.today()
+            cur_yr  = today.year
+            prev_yr = cur_yr - 1
+            fin_years = [prev_yr, cur_yr]
+
             frames=[]
-            with st.spinner("Fetching all years…"):
-                for yr in all_years:
-                    df_y=api_monthly(client.base_url,sid,yr,
-                                     client.xsrf,client.verify_ssl)
+            with st.spinner("Fetching last year and current year…"):
+                yr_data=api_monthly_years(client.base_url,sid,fin_years,
+                                          client.xsrf,client.verify_ssl)
+                for yr in fin_years:
+                    df_y=yr_data[yr]
                     if not df_y.empty:
                         df_y=df_y.copy(); df_y["_yr"]=yr; frames.append(df_y)
             if not frames: st.warning("No data."); st.stop()
@@ -1698,32 +2768,59 @@ with t_financial:
                    .reset_index().sort_values(["yr","m"]))
             df_mo["YM"]=df_mo.apply(lambda r:f"{int(r['yr'])}-{int(r['m']):02d}",axis=1)
 
-            # Fetch monthly DAM prices
-            with st.spinner("Fetching monthly DAM prices (takes ~30s for all years)…"):
-                prices={}
-                today=date.today()
-                for _,row in df_mo.iterrows():
-                    k=(int(row["yr"]),int(row["m"]))
-                    if k not in prices and date(k[0],k[1],1)<today:
-                        prices[k]=dam_monthly_avg(k[0],k[1])
+            with st.spinner("Fetching monthly DAM prices…"):
+                pairs=sorted({(int(row["yr"]),int(row["m"])) for _,row in df_mo.iterrows()
+                             if date(int(row["yr"]),int(row["m"]),1)<today})
+                prices=dam_monthly_avg_batch(pairs)
             df_mo["DAM"]=df_mo.apply(lambda r:prices.get((int(r["yr"]),int(r["m"]))),axis=1)
             df_mo["Revenue"]=df_mo.apply(
                 lambda r:r["kWh"]*r["DAM"]/1000
                 if pd.notna(r["DAM"]) and r["DAM"]>0 else pd.NA, axis=1)
-            df_mo["OPEX_EUR"]=(fixed_opex/12
-                               + df_mo["kWh"]/1000*var_opex)
+            df_mo["OPEX_EUR"]=(fixed_opex/12 + df_mo["kWh"]/1000*var_opex)
             df_mo["EBITDA"]=df_mo["Revenue"].fillna(0)-df_mo["OPEX_EUR"]
-
-            # Rolling 12-month DSCR
             df_mo["Rev12"]  =df_mo["Revenue"].fillna(0).rolling(12,min_periods=6).sum()
             df_mo["OPEX12"] =df_mo["OPEX_EUR"].rolling(12,min_periods=6).sum()
             df_mo["DS12"]   =annual_debt
             df_mo["DSCR"]   =(df_mo["Rev12"]-df_mo["OPEX12"])/df_mo["DS12"]
 
-            # ── Revenue Waterfall (annual) ──
-            st.subheader("① Annual Revenue Waterfall")
-            wa_year=st.selectbox("Waterfall year",options=all_years,
-                                  index=len(all_years)-1,key="wa_yr")
+            # ── YTD / MTD summary strip ──────────────────────────────────────
+            st.subheader("① YTD & MTD Summary")
+            cur_data = df_mo[df_mo["yr"]==cur_yr]
+            prev_data= df_mo[df_mo["yr"]==prev_yr]
+
+            ytd_rev  = cur_data["Revenue"].sum(skipna=True)
+            ytd_kwh  = cur_data["kWh"].sum(skipna=True)
+            ytd_rev_py=prev_data["Revenue"].sum(skipna=True)
+            ytd_kwh_py=prev_data["kWh"].sum(skipna=True)
+
+            mtd_row  = cur_data[cur_data["m"]==today.month]
+            mtd_rev  = float(mtd_row["Revenue"].iloc[0]) if not mtd_row.empty and pd.notna(mtd_row["Revenue"].iloc[0]) else 0.0
+            mtd_kwh  = float(mtd_row["kWh"].iloc[0])    if not mtd_row.empty else 0.0
+            mtd_price= float(mtd_row["DAM"].iloc[0])    if not mtd_row.empty and pd.notna(mtd_row["DAM"].iloc[0]) else 0.0
+
+            # Prorated MTD budget
+            bdf_cur = get_budget(cur_yr)
+            days_gone = today.day
+            days_total= calendar.monthrange(today.year, today.month)[1]
+            mtd_budg_kwh = float(bdf_cur.loc[bdf_cur["MonthNum"]==today.month,"Budget_kWh"].iloc[0])
+            mtd_budg_pro = mtd_budg_kwh * days_gone / days_total
+
+            fa,fb,fc_,fd = st.columns(4)
+            fa.metric(f"YTD Revenue ({cur_yr})", f"€ {ytd_rev:,.0f}",
+                      delta=f"€ {ytd_rev-ytd_rev_py:+,.0f} vs {prev_yr}" if ytd_rev_py else None)
+            fb.metric(f"YTD Production ({cur_yr})", f"{ytd_kwh/1e3:,.1f} MWh",
+                      delta=f"{(ytd_kwh-ytd_kwh_py)/1e3:+,.1f} MWh vs {prev_yr}" if ytd_kwh_py else None)
+            fc_.metric(f"MTD Revenue ({MONTH_LABELS[today.month-1]})",
+                       f"€ {mtd_rev:,.0f}", delta=f"Avg SMP: {mtd_price:.1f} €/MWh")
+            fd.metric(f"MTD Production vs Pro-rated Budget",
+                      f"{mtd_kwh:,.0f} kWh",
+                      delta=f"{mtd_kwh-mtd_budg_pro:+,.0f} kWh vs budget",
+                      delta_color="normal" if mtd_kwh>=mtd_budg_pro else "inverse")
+
+            st.divider()
+            st.subheader("② Annual Revenue Waterfall")
+            wa_year=st.selectbox("Waterfall year",options=fin_years,
+                                  index=len(fin_years)-1,key="wa_yr")
             dy=df_mo[df_mo["yr"]==wa_year]
 
             pvg_yr=pvgis_df([wa_year],ref_pr)
@@ -1760,7 +2857,7 @@ with t_financial:
                 st.plotly_chart(fig_rev,use_container_width=True)
 
             # ── Capture Rate trend ──
-            st.subheader("② Monthly Capture Rate")
+            st.subheader("③ Monthly Revenue & EBITDA")
             df_mo["Capture_Price"]=df_mo["DAM"]  # proxy — improve with 15-min data
             df_mo["Capture_Rate"]=df_mo["Capture_Price"]/df_mo["DAM"]
             figC=go.Figure()
@@ -1774,7 +2871,7 @@ with t_financial:
             st.plotly_chart(figC,use_container_width=True)
 
             # ── DSCR Chart ──
-            st.subheader("③ Rolling 12-Month DSCR")
+            st.subheader("④ Rolling 12-Month DSCR")
             df_dscr=df_mo.dropna(subset=["DSCR"])
             figDSCR=go.Figure()
             figDSCR.add_scatter(x=df_dscr["YM"],y=df_dscr["DSCR"],
@@ -1813,13 +2910,22 @@ with t_financial:
 with t_forecast:
     st.header("7-Day Production & Revenue Forecast")
     st.caption("Production forecast: Open-Meteo GHI → GTI (×1.15 proxy) → yield model. "
-               "Revenue forecast uses next-day ADMIE DAM if available, else trailing avg.")
+               "Revenue forecast uses next-day ENTSO-E Day-Ahead price if available, else trailing avg.")
 
     if st.button("Load Forecast",key="btn_fc"):
         with st.spinner("Fetching Open-Meteo forecast…"):
             df_fc=fetch_forecast()
         if df_fc.empty:
-            st.warning("Could not fetch forecast (network may be blocked)."); st.stop()
+            err = st.session_state.get("_forecast_error","")
+            st.warning(
+                "⚠️ Could not fetch forecast from Open-Meteo.\n\n"
+                + (f"**Error:** `{err}`\n\n" if err else "")
+                + "**Possible fixes:**\n"
+                "- Add `[proxy] https = \"http://proxy-rwe-de.energy.local:8080\"` to secrets.toml\n"
+                "- Check that `api.open-meteo.com` is reachable from your network\n"
+                "- Try: `curl https://api.open-meteo.com/v1/forecast` in terminal"
+            )
+            st.stop()
 
         # Aggregate to daily
         df_fc["Date"]=df_fc["dt"].dt.date
@@ -1832,10 +2938,12 @@ with t_forecast:
 
         # Fetch next-day DAM (D+1 published by ADMIE ~13:00)
         fc_dam={}
-        with st.spinner("Checking ADMIE for next-day prices…"):
-            for d in df_day["Date"].dt.date.tolist():
-                p=dam_daily(d)
-                if not p.empty and "price" in p.columns:
+        with st.spinner("Checking ENTSO-E for next-day prices…"):
+            fc_dates=df_day["Date"].dt.date.tolist()
+            dam_results=dam_daily_batch(fc_dates)
+            for d in fc_dates:
+                p=dam_results.get(d)
+                if p is not None and not p.empty and "price" in p.columns:
                     fc_dam[d]=p["price"].mean()
         if fc_dam:
             df_day["DAM"]=df_day["Date"].dt.date.map(fc_dam)
@@ -1895,6 +3003,12 @@ with t_health:
     with h_tab1:
         if st.button("Run Live Diagnostics",key="btn_diag"):
             client, stations = ensure_client()
+            if not client:
+                st.error("❌ Cannot connect to FusionSolar — check credentials in secrets.toml.")
+                st.stop()
+            if not stations:
+                st.error("❌ No stations returned from FusionSolar API.")
+                st.stop()
             if client and stations:
                 sid=stations[0].get("stationCode") or stations[0].get("plantCode")
                 with st.spinner("Fetching device list…"):
@@ -2131,12 +3245,18 @@ with t_opex:
         # OPEX/MWh (need production data)
         if st.button("Calculate OPEX/MWh",key="opex_mwh"):
             client, stations = ensure_client()
+            if not client or not stations:
+                st.error("❌ FusionSolar connection failed — check secrets.toml credentials.")
+                st.stop()
             if client and stations:
                 sid=stations[0].get("stationCode") or stations[0].get("plantCode")
                 frames=[]
-                for yr in list(range(PLANT_START_YEAR,date.today().year+1)):
-                    df_y=api_monthly(client.base_url,sid,yr,
-                                     client.xsrf,client.verify_ssl)
+                opex_years=list(range(PLANT_START_YEAR,date.today().year+1))
+                with st.spinner(f"Fetching {len(opex_years)} years…"):
+                    yr_data=api_monthly_years(client.base_url,sid,opex_years,
+                                              client.xsrf,client.verify_ssl)
+                for yr in opex_years:
+                    df_y=yr_data[yr]
                     if not df_y.empty:
                         df_y=df_y.copy(); df_y["_yr"]=yr; frames.append(df_y)
                 if frames:
@@ -2243,11 +3363,15 @@ with t_failure:
         "component failures. Data is built up each time you run **Live Diagnostics**."
     )
 
-    conn = _get_db()
-    telem_rows = conn.execute(
-        "SELECT ts, inverter_id, signal, value FROM telemetry_history ORDER BY ts"
-    ).fetchall()
-    conn.close()
+    try:
+        conn = _get_db()
+        telem_rows = conn.execute(
+            "SELECT ts, inverter_id, signal, value FROM telemetry_history ORDER BY ts"
+        ).fetchall()
+        conn.close()
+    except Exception as e:
+        st.error(f"❌ Could not read telemetry database: `{e}`")
+        telem_rows = []
 
     if not telem_rows:
         st.info(
@@ -2596,40 +3720,153 @@ with t_failure:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# TAB: EVENTS  (FusionSolar device alarms — table, timeline, breakdown)
+# ─────────────────────────────────────────────────────────────────────────────
+with t_events:
+    st.header("🚨 FusionSolar Events Analytics")
+    st.caption(
+        "Device alarms/events pulled live from FusionSolar (thirdData/getAlarmList). "
+        "Field names can vary slightly by API version/tenant — use the raw response "
+        "expander below to confirm the column mapping against your account."
+    )
+
+    ec1, ec2 = st.columns([2, 1])
+    with ec1:
+        ev_range = st.date_input("Date range",
+            value=(date.today() - timedelta(days=30), date.today()),
+            max_value=date.today(), key="ev_dates")
+    with ec2:
+        ev_sev = st.multiselect("Severity", ALARM_LEVEL_ORDER,
+                                default=ALARM_LEVEL_ORDER, key="ev_sev")
+
+    if not isinstance(ev_range, tuple) or len(ev_range) != 2:
+        st.info("Pick a start and end date.")
+        st.stop()
+    ev_start, ev_end = ev_range
+
+    _run_events = (st.button("🔄 Load Events", key="btn_events")
+                  or "events_raw" not in st.session_state
+                  or st.session_state.get("events_range") != (str(ev_start), str(ev_end)))
+
+    if _run_events:
+        client, stations = ensure_client()
+        if not client or not stations:
+            st.error("❌ FusionSolar connection failed — check secrets.toml.")
+            st.stop()
+        sid = stations[0].get("stationCode") or stations[0].get("plantCode")
+        with st.spinner(f"Fetching events {ev_start} → {ev_end}…"):
+            st.session_state["events_raw"] = api_alarms_range(
+                client.base_url, sid, ev_start, ev_end,
+                client.xsrf, client.verify_ssl)
+        st.session_state["events_range"] = (str(ev_start), str(ev_end))
+
+    ev_raw = st.session_state.get("events_raw", pd.DataFrame())
+    events = normalize_alarms(ev_raw)
+
+    if events.empty:
+        st.info(
+            "No events found for the selected range — or the FusionSolar alarm "
+            "endpoint returned data in an unrecognised schema. Check the raw "
+            "response expander below."
+        )
+    else:
+        ev_f = events[events["Severity"].isin(ev_sev)] if ev_sev else events.iloc[0:0]
+
+        st.subheader("① Summary")
+        k1, k2, k3, k4 = st.columns(4)
+        k1.metric("Total Events", str(len(ev_f)))
+        k2.metric("Critical", str((ev_f["Severity"] == "Critical").sum()))
+        k3.metric("Major", str((ev_f["Severity"] == "Major").sum()))
+        latest = ev_f["dt"].max() if not ev_f.empty else None
+        k4.metric("Most Recent",
+                  latest.strftime("%Y-%m-%d %H:%M") if pd.notna(latest) else "—")
+
+        st.divider()
+        st.subheader("② Event Timeline")
+        if ev_f.empty:
+            st.info("No events match the selected severity filter.")
+        else:
+            figT = go.Figure()
+            for sev in ALARM_LEVEL_ORDER:
+                sub = ev_f[ev_f["Severity"] == sev]
+                if sub.empty:
+                    continue
+                figT.add_scatter(
+                    x=sub["dt"], y=[sev]*len(sub), mode="markers", name=sev,
+                    marker=dict(size=10, symbol="diamond",
+                               color=ALARM_LEVEL_COLOR.get(sev, "#94a3b8"),
+                               line=dict(width=1, color="#0e1117")),
+                    customdata=sub[["Device", "Alarm", "Cause"]].values,
+                    hovertemplate="<b>%{customdata[1]}</b><br>%{customdata[0]}<br>"
+                                 "%{customdata[2]}<br>%{x}<extra></extra>")
+            _base_layout(figT, "Events over time", "Time", "Severity", showlegend=False)
+            figT.update_yaxes(categoryorder="array",
+                              categoryarray=list(reversed(ALARM_LEVEL_ORDER)))
+            st.plotly_chart(figT, use_container_width=True)
+
+        st.divider()
+        st.subheader("③ Breakdown")
+        b1, b2 = st.columns(2)
+        with b1:
+            sev_counts = ev_f["Severity"].value_counts().reindex(ALARM_LEVEL_ORDER).dropna()
+            figS = go.Figure(go.Bar(
+                x=sev_counts.index, y=sev_counts.values,
+                marker_color=[ALARM_LEVEL_COLOR.get(s, "#94a3b8") for s in sev_counts.index]))
+            _base_layout(figS, "By Severity", "Severity", "Count", showlegend=False)
+            st.plotly_chart(figS, use_container_width=True)
+        with b2:
+            dev_counts = ev_f["Device"].value_counts().head(10)
+            figD = go.Figure(go.Bar(x=dev_counts.values, y=dev_counts.index,
+                                    orientation="h", marker_color="#3ecfcf"))
+            _base_layout(figD, "Top Devices by Event Count", "Count", "", showlegend=False)
+            st.plotly_chart(figD, use_container_width=True)
+
+        st.divider()
+        st.subheader("④ Event Log")
+        tbl = ev_f.copy()
+        tbl["Time"] = tbl["dt"].dt.strftime("%Y-%m-%d %H:%M")
+        tbl = tbl[["Time", "Device", "Severity", "Alarm", "Cause", "Status"]] \
+              .sort_values("Time", ascending=False)
+        st.dataframe(tbl, use_container_width=True, hide_index=True)
+        st.download_button("📥 Download events CSV", tbl.to_csv(index=False).encode(),
+            file_name=f"fusionsolar_events_{ev_start}_{ev_end}.csv", mime="text/csv")
+
+    with st.expander("🔍 Raw response (debug column mapping)"):
+        if ev_raw is None or ev_raw.empty:
+            st.caption("No raw rows fetched yet — click **Load Events** above.")
+        else:
+            st.caption(f"Resolved columns: `{_resolve_alarm_cols(ev_raw)}`")
+            st.dataframe(ev_raw.head(20), use_container_width=True)
+
+# ─────────────────────────────────────────────────────────────────────────────
 # TAB: IPTO DIAGNOSTICS  (live connectivity probe + troubleshooting guide)
 # ─────────────────────────────────────────────────────────────────────────────
 with t_ipto:
-    st.header("🔌 IPTO / ADMIE Market Data Diagnostics")
+    st.header("📡 ENTSO-E Market Data Diagnostics")
     st.caption(
-        "The DAM price data powering financial tabs comes from the Greek TSO (ADMIE/IPTO) "
-        "public API at `admie.gr`. This panel diagnoses why prices may not be loading "
-        "and shows what's cached locally."
+        "Greek SMP prices powering the financial tabs are sourced from the "
+        "ENTSO-E Transparency Platform (document A44, Day-Ahead, Greece bidding zone). "
+        "Use this panel to verify connectivity and inspect the local price cache."
     )
 
-    # Show last known error from session state
-    last_err = st.session_state.get("_admie_last_error")
+    # Last error banner
+    last_err = st.session_state.get("_entsoe_last_error")
     if last_err:
-        st.error(f"**Last ADMIE error recorded this session:**\n\n`{last_err}`")
+        st.error(f"**Last error recorded this session:**\n\n`{last_err}`")
     else:
-        st.success("No ADMIE errors recorded this session.")
+        st.success("No errors recorded this session.")
 
     st.divider()
 
-    # ── Live probe ──
+    # ── Live connectivity probe ───────────────────────────────────────────────
     st.subheader("Live Connectivity Probe")
-    st.write(
-        "Runs a full end-to-end test: DNS → HTTPS → API response → file download → "
-        "price parsing. Takes 5–15 seconds."
-    )
-
     probe_col1, probe_col2 = st.columns([1, 2])
     probe_timeout = probe_col1.slider("Timeout (s)", 5, 30, 10, key="probe_timeout")
 
-    if probe_col2.button("▶️ Run ADMIE Connectivity Probe", key="btn_probe"):
-        with st.spinner("Probing admie.gr …"):
-            result = probe_admie(timeout=probe_timeout)
+    if probe_col2.button("▶️ Run ENTSO-E Probe", key="btn_probe"):
+        with st.spinner("Probing ENTSO-E API…"):
+            result = probe_entsoe(timeout=probe_timeout)
 
-        # Display result
         if result.get("user_message"):
             if result.get("price_parseable"):
                 st.success(result["user_message"])
@@ -2638,160 +3875,74 @@ with t_ipto:
             else:
                 st.error(result["user_message"])
 
-        # Detail table
         detail_rows = [
-            ("DNS / Network reachable", "✅ Yes" if result["reachable"] else "❌ No"),
-            ("HTTP status code",        str(result.get("status_code") or "N/A")),
-            ("Error type",              result.get("error_type") or "None"),
-            ("File URL found",          "✅ Yes" if result["file_url_found"] else "❌ No"),
-            ("Price column parseable",  "✅ Yes" if result["price_parseable"] else "❌ No"),
-            ("Sample avg price",        f"{result['sample_price']:.2f} €/MWh"
-                                        if result["sample_price"] else "N/A"),
-            ("API JSON keys",           str(result.get("json_keys") or "N/A")),
-            ("Files found for test date", str(result.get("n_files", 0))),
+            ("API reachable",      "✅ Yes" if result["reachable"] else "❌ No"),
+            ("HTTP status",        str(result.get("status_code") or "N/A")),
+            ("Error type",         result.get("error_type") or "None"),
+            ("Prices parsed",      "✅ Yes" if result["price_parseable"] else "❌ No"),
+            ("Periods returned",   str(result.get("n_periods", 0))),
+            ("Sample avg price",   f"{result['sample_price']:.2f} €/MWh"
+                                   if result.get("sample_price") else "N/A"),
+            ("Detected NS",        result.get("detected_ns", "N/A")),
+            ("Root tag",           result.get("root_tag", "N/A")),
+            ("ACK reason code",    result.get("ack_code", "N/A")),
+            ("ACK reason text",    result.get("ack_reason", "N/A")),
         ]
-        df_det = pd.DataFrame(detail_rows, columns=["Check","Result"])
-        st.dataframe(df_det, use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame(detail_rows, columns=["Check", "Result"]),
+                     use_container_width=True, hide_index=True)
+
+        if result.get("raw_xml"):
+            with st.expander("📄 Raw XML response (first 800 chars)"):
+                st.code(result["raw_xml"], language="xml")
 
     st.divider()
 
-    # ── Troubleshooting decision tree ──
-    st.subheader("Troubleshooting Guide")
+    # ── Troubleshooting ───────────────────────────────────────────────────────
+    st.subheader("Troubleshooting")
 
-    with st.expander("❌ DNS failure / NameResolutionError", expanded=False):
+    with st.expander("❌ No token / 401 Unauthorised"):
         st.markdown("""
-**Symptom:** `Failed to resolve 'www.admie.gr'` or `NameResolutionError`
+**Symptom:** `NO_TOKEN` or `INVALID_TOKEN` error type
 
-**Cause:** Your server cannot reach external DNS for `admie.gr`.
-
-**Fixes (in order of likelihood):**
-1. **Streamlit Cloud / PaaS** — these platforms allow all outbound HTTPS by default. Re-deploy and test.
-2. **Self-hosted with corporate firewall** — ask your network team to whitelist `www.admie.gr:443` in the egress firewall and DNS resolver.
-3. **Docker container** — ensure the container has DNS configured (`--dns 8.8.8.8`) and outbound port 443 is not blocked by the host firewall.
-4. **VPN** — if your server is behind a split-tunnel VPN, `admie.gr` (a Greek TSO) may be routed through the tunnel and blocked. Add a split-tunnel exception.
-5. **Development machine** — test from terminal: `curl -I https://www.admie.gr/` — if that works, the issue is environment-specific.
+**Fix:**
+1. Register free at [transparency.entsoe.eu](https://transparency.entsoe.eu)
+2. Go to **My Account Settings → Web API Security Token → Generate Token**
+3. Add to `.streamlit/secrets.toml`:
+```toml
+[entsoe]
+api_key = "your-uuid-token-here"
+```
+4. Restart the app — tokens look like `a1b2c3d4-e5f6-7890-abcd-ef1234567890`
 """)
 
-    with st.expander("🚫 Egress proxy blocked (x-deny-reason header)", expanded=False):
+    with st.expander("⏱️ Timeout / DNS failure"):
         st.markdown("""
-**Symptom:** API responds but includes `x-deny-reason` header
-
-**Cause:** A corporate or PaaS egress proxy is intercepting and blocking the request based on domain policy.
+**Symptom:** `TIMEOUT` or `DNS_FAILURE` error type
 
 **Fixes:**
-1. Add `admie.gr` and `www.admie.gr` to your proxy allowlist.
-2. If using Streamlit Community Cloud, egress is unrestricted — this error won't occur there.
-3. Check if the proxy also blocks the file CDN that ADMIE uses to serve Excel files (often a different domain).
+1. Increase the timeout slider and re-run the probe.
+2. Ensure `web-api.tp.entsoe.eu` (port 443) is reachable from your server.
+3. If behind a corporate firewall, whitelist `tp.entsoe.eu`.
+4. Test from terminal: `curl -I https://web-api.tp.entsoe.eu/api`
 """)
 
-    with st.expander("⏱️ Timeout", expanded=False):
+    with st.expander("⚠️ Connected but 0 price points returned"):
         st.markdown("""
-**Symptom:** `ReadTimeout` or `ConnectTimeout`
+**Symptom:** API returns HTTP 200 but no prices parsed
 
-**Cause:** ADMIE server is slow to respond (common during business hours) or network latency is high.
-
-**Fixes:**
-1. Increase the timeout slider above and re-run the probe.
-2. The `dam_daily()` and `dam_monthly_avg()` functions use 15s and 20s timeouts — acceptable for most deployments.
-3. ADMIE sometimes publishes files late (DAM results for D+1 appear around 13:00 EET). Avoid fetching before 14:00 EET.
-4. Consider adding a retry queue that polls every 30 minutes rather than on-demand.
-""")
-
-    with st.expander("⚠️ API returns data but no price column found", expanded=False):
-        st.markdown("""
-**Symptom:** Probe succeeds, file downloads, but price parsing fails
-
-**Cause:** ADMIE occasionally changes the Excel column names or sheet structure.
-
-**Fixes:**
-1. Run the probe and note the actual column names shown in the diagnostic table.
-2. Add the new column name keyword to the `["mcp","smp","price","τιμή"]` list in `dam_daily()`.
-3. ADMIE publishes both English and Greek column headers depending on the file version — both are handled.
-4. Try `ISP1ISPResults` instead of `DAM_ResultsSummary` — it uses a slightly different schema.
-""")
-
-    with st.expander("📅 No files for a specific date", expanded=False):
-        st.markdown("""
-**Symptom:** API returns empty list `[]` for the requested date
-
-**Causes:**
-- The date is in the future (DAM results are published D-1 by ~13:00 EET)
-- The date is a weekend or holiday — ADMIE still publishes but file names may differ
-- The date predates the DAM_ResultsSummary file format (pre-2018 use different endpoints)
-
-**Fixes:**
-1. Always use `date.today() - timedelta(days=1)` as the default date
-2. For historical data, try the `ISP1ISPResults` fallback
-3. Check https://www.admie.gr/en/market/market-statistics manually for that date
+**Possible causes:**
+- The test date has no published prices yet (Day-Ahead prices published ~13:00 CET day before)
+- The XML namespace changed — check [ENTSO-E API docs](https://transparency.entsoe.eu/content/static_content/Static%20content/web%20api/Guide.html)
+- The Greece bidding zone EIC may have changed (currently `10YGR-HTSO-----Y`)
 """)
 
     st.divider()
 
-    # ── ISP Raw Sheet Inspector ───────────────────────────────────────────────
-    st.subheader("ISP Raw Sheet Inspector")
-    st.caption(
-        "Downloads the latest ISP1ISPResults file and shows every row label "
-        "(col 0) in each sheet — useful if the SMP row matcher fails because "
-        "ADMIE renamed a row. Matched rows are marked ✅."
-    )
-    inspect_date = st.date_input(
-        "Date to inspect", value=date.today() - timedelta(days=3),
-        key="isp_inspect_date")
-
-    if st.button("Inspect ISP File", key="btn_inspect"):
-        ds_i = inspect_date.strftime("%Y-%m-%d")
-        with st.spinner(f"Downloading ISP1ISPResults for {ds_i}…"):
-            content = _fetch_admie_file("ISP1ISPResults", ds_i, ds_i, timeout=25)
-        if not content:
-            st.error(f"No ISP file found for {ds_i}. "
-                     "Check network connectivity or try a different date.")
-        else:
-            xl = pd.read_excel(io.BytesIO(content), sheet_name=None)
-            st.success(f"File downloaded — {len(xl)} sheet(s): {list(xl.keys())}")
-            for sname, df_s in xl.items():
-                with st.expander(
-                        f"Sheet: **{sname}**  "
-                        f"({df_s.shape[0]} rows × {df_s.shape[1]} cols)"):
-                    labels = df_s.iloc[:, 0].astype(str).tolist()
-                    st.markdown("**Row labels in col 0** — SMP matcher searches these:")
-                    label_df = pd.DataFrame({
-                        "Row": range(len(labels)),
-                        "Label": labels,
-                        "Matched": [
-                            "✅" if any(kw in lbl.lower()
-                                       for kw in _SMP_ROW_KEYWORDS) else ""
-                            for lbl in labels
-                        ]
-                    })
-                    st.dataframe(label_df[label_df["Label"] != "nan"],
-                                 use_container_width=True, hide_index=True)
-
-                    # Try to parse this single sheet
-                    r_df = _parse_excel_isp_format(
-                        {sname: df_s}, inspect_date, "ISP1ISPResults")
-                    if r_df is not None and not r_df.empty:
-                        prices_f = pd.to_numeric(r_df["price"], errors="coerce").dropna()
-                        st.success(
-                            f"✅ SMP parsed from this sheet — "
-                            f"{len(prices_f)} periods, "
-                            f"avg = **{prices_f.mean():.2f} €/MWh**, "
-                            f"min = {prices_f.min():.2f}, "
-                            f"max = {prices_f.max():.2f}")
-                        st.dataframe(r_df.head(10).style.format({"price": "{:.2f}"}),
-                                     use_container_width=True, hide_index=True)
-                    else:
-                        st.warning(
-                            "⚠️ No SMP row matched in this sheet. "
-                            "Find the correct label above and add it to "
-                            "`_SMP_ROW_KEYWORDS` in `apm_app.py`.")
-
-    st.divider()
-
-    # ── Local price cache ──
+    # ── Local price cache ─────────────────────────────────────────────────────
     st.subheader("Local Price Cache (SQLite)")
     st.caption(
-        "When ADMIE is reachable, prices are cached locally. If the API goes down, "
-        "cached prices are used as fallback in financial calculations."
+        "Monthly average prices are cached locally after each successful ENTSO-E fetch. "
+        "Cached values are used as fallback if the API is temporarily unavailable."
     )
 
     conn = _get_db()
@@ -2802,8 +3953,8 @@ with t_ipto:
 
     if cache_rows:
         df_cache = pd.DataFrame(cache_rows,
-                                columns=["Month","Avg Price (€/MWh)","Fetched At"])
-        st.dataframe(df_cache.style.format({"Avg Price (€/MWh)":"{:.2f}"}),
+                                columns=["Month", "Avg Price (€/MWh)", "Fetched At"])
+        st.dataframe(df_cache.style.format({"Avg Price (€/MWh)": "{:.2f}"}),
                      use_container_width=True, hide_index=True)
         st.metric("Cached months", len(cache_rows))
 
@@ -2814,37 +3965,30 @@ with t_ipto:
             st.rerun()
     else:
         st.info(
-            "No prices cached yet. Once ADMIE is reachable from your deployment server, "
-            "prices will be automatically cached here as you use the Monthly and Financial tabs."
+            "No prices cached yet. Prices are cached automatically as you use "
+            "the Monthly and Financial tabs."
         )
 
     st.divider()
 
-    # ── API reference ──
-    with st.expander("📖 ADMIE API Reference"):
-        st.markdown("""
-**Base endpoint:**
-```
-GET https://www.admie.gr/getOperationMarketFile
-```
+    with st.expander("📖 ENTSO-E API Reference"):
+        st.markdown(f"""
+**Base endpoint:** `https://web-api.tp.entsoe.eu/api`
 
-**Parameters:**
+**Key parameters for Greek SMP:**
 
-| Parameter | Values | Description |
-|-----------|--------|-------------|
-| `dateStart` | `YYYY-MM-DD` | Start date |
-| `dateEnd` | `YYYY-MM-DD` | End date |
-| `FileCategory` | `DAM_ResultsSummary` | Day-Ahead Market clearing prices (primary) |
-| | `ISP1ISPResults` | Intra-day System Marginal Price (fallback) |
+| Parameter | Value |
+|-----------|-------|
+| `documentType` | `A44` (Price Document) |
+| `processType` | `A01` (Day Ahead) |
+| `in_Domain` | `{ENTSOE_ZONE}` |
+| `out_Domain` | `{ENTSOE_ZONE}` |
+| `periodStart` / `periodEnd` | UTC, format `YYYYMMDDHHII` |
+| `securityToken` | your API token |
 
-**Response:** JSON array of file metadata objects. Each contains a URL to an Excel file.
+**Resolution:** 60-min (hourly) for Greece Day-Ahead prices
 
-**Excel file structure:** One sheet with columns including period/time and MCP (Market Clearing Price) in €/MWh.
+**Publication schedule:** Day-Ahead results published ~13:00 CET for the following day
 
-**Notes:**
-- DAM results are published by ~13:00 EET for the following day (D+1)
-- 96 rows = 15-min resolution; 24 rows = hourly
-- Greek column headers: `Τιμή` = Price, `Περίοδος` = Period
-- SSL certificate may require `verify=False` on some server configurations
-- No authentication required — fully public API
+**Docs:** [ENTSO-E Transparency Platform API Guide](https://transparency.entsoe.eu/content/static_content/Static%20content/web%20api/Guide.html)
 """)

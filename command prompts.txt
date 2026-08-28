@@ -16,3 +16,8 @@ The system cannot find the path specified.
 (.venv) (base) C:\Users\ui902043>cd streamlit-crash-course
 
 (.venv) (base) C:\Users\ui902043\streamlit-crash-course>
+
+
+API Token ENTSOE:
+
+553d12f5-86b1-4da3-8459-48cdee188a03

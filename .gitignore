@@ -1,0 +1,15 @@
+# Secrets — never commit real credentials
+**/.streamlit/secrets.toml
+**/.streamlit/secrets - Copy.toml
+**/secrets - Copy.toml
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Office temp lock files
+~$*
