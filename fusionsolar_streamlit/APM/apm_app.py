@@ -2826,22 +2826,32 @@ with t_financial:
             prev_yr = cur_yr - 1
             fin_years = [prev_yr, cur_yr]
 
-            frames=[]
-            with st.spinner("Fetching last year and current year…"):
-                yr_data=api_monthly_years(client.base_url,sid,fin_years,
-                                          client.xsrf,client.verify_ssl)
-                for yr in fin_years:
-                    df_y=yr_data[yr]
-                    if not df_y.empty:
-                        df_y=df_y.copy(); df_y["_yr"]=yr; frames.append(df_y)
-            if not frames: st.warning("No data."); st.stop()
+            # Revenue/kWh come from the same daily_revenue table the Monthly
+            # and Intraday tabs use — actual per-15-min production x price,
+            # not a flat monthly-average approximation. A flat monthly
+            # average systematically overstates solar revenue: production
+            # concentrates in midday hours when prices tend to sit BELOW the
+            # month's average (the same cannibalization effect the Intraday
+            # tab's Capture Rate is meant to surface), so kWh x avg_price
+            # was previously landing well above what the plant actually
+            # earned — caught live as a 79,097 vs 48,915 mismatch against
+            # the Monthly tab for the same period.
+            with st.spinner("Loading revenue history…"):
+                all_dates=[]
+                d=date(prev_yr,1,1)
+                while d<=today:
+                    all_dates.append(d); d+=timedelta(days=1)
+                rev_map=_cached_revenue_days(all_dates)
+            if not rev_map:
+                st.warning("No computed revenue yet — compute some days in the Monthly tab first.")
+                st.stop()
 
-            df_all=pd.concat(frames,ignore_index=True)
-            tc,ec=_resolve(df_all)
-            df_all["dt"]=pd.to_datetime(df_all[tc],unit="ms",utc=True).dt.tz_convert(PLANT_TZ)
-            df_all["m"]=df_all["dt"].dt.month; df_all["yr"]=df_all["_yr"]
-            df_all["kWh"]=pd.to_numeric(df_all[ec],errors="coerce")
-            df_mo=(df_all.groupby(["yr","m"])["kWh"].sum()
+            df_all=pd.DataFrame([
+                {"date":date.fromisoformat(k),"kWh":v["kwh"],"Revenue":v["revenue_eur"]}
+                for k,v in rev_map.items()])
+            df_all["yr"]=df_all["date"].apply(lambda x:x.year)
+            df_all["m"] =df_all["date"].apply(lambda x:x.month)
+            df_mo=(df_all.groupby(["yr","m"])[["kWh","Revenue"]].sum()
                    .reset_index().sort_values(["yr","m"]))
             df_mo["YM"]=df_mo.apply(lambda r:f"{int(r['yr'])}-{int(r['m']):02d}",axis=1)
 
@@ -2849,10 +2859,11 @@ with t_financial:
                 pairs=sorted({(int(row["yr"]),int(row["m"])) for _,row in df_mo.iterrows()
                              if date(int(row["yr"]),int(row["m"]),1)<today})
                 prices=dam_monthly_avg_batch(pairs)
+            # DAM here is a flat monthly-average reference price — kept for
+            # the waterfall's "expected revenue" baseline and as the
+            # denominator for Capture Rate, but no longer used to compute
+            # actual Revenue.
             df_mo["DAM"]=df_mo.apply(lambda r:prices.get((int(r["yr"]),int(r["m"]))),axis=1)
-            df_mo["Revenue"]=df_mo.apply(
-                lambda r:r["kWh"]*r["DAM"]/1000
-                if pd.notna(r["DAM"]) and r["DAM"]>0 else pd.NA, axis=1)
             df_mo["OPEX_EUR"]=(fixed_opex/12 + df_mo["kWh"]/1000*var_opex)
             df_mo["EBITDA"]=df_mo["Revenue"].fillna(0)-df_mo["OPEX_EUR"]
             df_mo["Rev12"]  =df_mo["Revenue"].fillna(0).rolling(12,min_periods=6).sum()
@@ -2935,7 +2946,9 @@ with t_financial:
 
             # ── Capture Rate trend ──
             st.subheader("③ Monthly Revenue & EBITDA")
-            df_mo["Capture_Price"]=df_mo["DAM"]  # proxy — improve with 15-min data
+            # Real capture price now that Revenue/kWh come from actual 15-min
+            # weighted data: €/MWh actually realized, vs DAM's flat average.
+            df_mo["Capture_Price"]=(df_mo["Revenue"]*1000/df_mo["kWh"]).where(df_mo["kWh"]>0)
             df_mo["Capture_Rate"]=df_mo["Capture_Price"]/df_mo["DAM"]
             figC=go.Figure()
             figC.add_scatter(x=df_mo["YM"],y=df_mo["Revenue"].fillna(0),
