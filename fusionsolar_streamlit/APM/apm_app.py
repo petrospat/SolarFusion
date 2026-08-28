@@ -8,6 +8,7 @@
 import io
 import os
 import glob
+import hmac
 import time
 import random
 import calendar
@@ -39,6 +40,52 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ACCESS GATE — this app has no other authentication layer of its own, and
+# once deployed (e.g. Streamlit Community Cloud) its URL is reachable by
+# anyone. Without this, any visitor could see real revenue/production
+# figures, the plant's GPS location and legal entity name, trigger live
+# FusionSolar/ENTSO-E API calls against the owner's own credentials, and
+# write to the alerts/opex/revenue log with no attribution. A single shared
+# password, checked before anything else renders, closes all of that off.
+#
+# Set in secrets.toml (locally) AND in the deployed app's Settings → Secrets
+# (never commit a real value):
+#     [app]
+#     password = "choose-a-strong-password"
+# ─────────────────────────────────────────────────────────────────────────────
+def _check_app_password() -> bool:
+    if st.session_state.get("_authenticated"):
+        return True
+
+    try:
+        configured = st.secrets["app"]["password"]
+    except Exception:
+        configured = None
+
+    if not configured:
+        st.error(
+            "⚠️ **No app password configured.** Add to `.streamlit/secrets.toml`:\n\n"
+            "```toml\n[app]\npassword = \"choose-a-strong-password\"\n```\n\n"
+            "For a deployed app, add the same under the app's **Settings → Secrets**."
+        )
+        return False
+
+    st.markdown("### 🔒 FusionSolar APM — Sign in")
+    with st.form("login_form"):
+        entered = st.text_input("Password", type="password")
+        submitted = st.form_submit_button("Enter")
+    if submitted:
+        if hmac.compare_digest(entered, str(configured)):
+            st.session_state["_authenticated"] = True
+            st.rerun()
+        else:
+            st.error("Incorrect password.")
+    return False
+
+if not _check_app_password():
+    st.stop()
 
 # ─────────────────────────────────────────────────────────────────────────────
 # PLANT CONSTANTS  ← configure these for your site
@@ -161,7 +208,14 @@ def _dual_layout(fig, title="", left_title="", right_title="",
 # ─────────────────────────────────────────────────────────────────────────────
 # SQLITE  — alerts, opex, downtime, cleaning events
 # ─────────────────────────────────────────────────────────────────────────────
-DB_PATH = "apm_data.db"
+# Resolved relative to this file, not the process's working directory: a bare
+# "apm_data.db" would silently create/read a different, empty database if the
+# app is ever launched from another cwd (exactly what Streamlit Community
+# Cloud does for a nested main file path like fusionsolar_streamlit/APM/
+# apm_app.py — it runs with cwd at the repo root) — caught live when a stray
+# near-empty apm_data.db at the repo root shadowed the real, fully-backfilled
+# one here after adding the password gate prompted a fresh run.
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "apm_data.db")
 
 # Locally exported per-inverter Huawei Excel files (com1-1/2/3), genuinely
 # native 15-min resolution. Preferred over the live FusionSolar API for the
