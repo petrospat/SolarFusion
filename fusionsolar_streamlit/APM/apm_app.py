@@ -92,7 +92,13 @@ if not _check_app_password():
 # ─────────────────────────────────────────────────────────────────────────────
 PLANT_TZ          = "Europe/Athens"
 PLANT_START_YEAR  = 2023          # COD year
-PLANT_PEAK_KW     = 1000.0        # Installed DC capacity (kWp)
+PLANT_PEAK_KW     = 1189.0        # Installed DC capacity (kWp) — 2016x JA Solar
+                                  # JAM72-D40-590-LB, per PVsyst as-built report
+PLANT_AC_KW       = 821.0         # Grid connection / inverter export limit (kWac,
+                                  # as-built). DC:AC ratio ≈1.45 — real, expected
+                                  # clipping/curtailment on clear-sky days by design,
+                                  # not a fault (confirmed live: ~25% of 15-min
+                                  # readings flagged "power limited").
 GAMMA             = -0.0035       # Temperature coefficient (%/°C) — typical mono-PERC
 NOCT              = 45.0          # Nominal Operating Cell Temperature (°C)
 INV_DEV_TYPE_IDS  = [1, 38, 39]   # Huawei device type IDs for inverters
@@ -109,11 +115,27 @@ INV_TEMP_WARN     = 75.0
 STRING_CV_WARN    = 0.12
 PROD_VS_EXP_WARN  = 0.70          # flag if actual < 70% of PVGIS expected
 
-# PVGIS-SARAH3 long-term monthly GTI (kWh/m²) — Asvestochori, Thessaloniki
-PVGIS_GTI = {1:55.2,2:73.8,3:118.6,4:155.4,5:185.2,6:205.7,
-             7:215.3,8:196.4,9:152.8,10:103.5,11:62.4,12:46.1}
-T_AMB     = {1:4.5,2:5.8,3:9.3,4:14.6,5:20.1,6:25.2,
-             7:27.8,8:27.4,9:22.5,10:16.2,11:10.6,12:6.1}
+# Monthly Global Incident irradiation in the collector plane (kWh/m²) and
+# ambient temperature (°C) — from the project's own PVsyst bankability
+# simulation (Asvestochori, 25° tilt, Lat 40.64/Long 23.07, PVGIS-api TMY
+# weather source, includes horizon/near-shading), not a generic lookup.
+PVGIS_GTI = {1:127.2,2:93.6,3:157.0,4:194.2,5:191.5,6:204.1,
+             7:218.9,8:210.3,9:189.4,10:143.5,11:91.7,12:90.0}
+T_AMB     = {1:6.71,2:6.60,3:10.83,4:16.74,5:20.00,6:22.49,
+             7:25.08,8:25.67,9:21.43,10:15.80,11:10.29,12:6.56}
+
+# PVsyst's own P50 monthly energy injected into the grid (MWh) — the "as
+# expected" baseline used for revenue/budget comparisons. Already nets out
+# every real-world loss the report models (soiling, IAM, temperature,
+# mismatch, inverter, AC/MV wiring, transformer, system unavailability)
+# INCLUDING grid export curtailment (-5.6% "Unused energy (grid
+# limitation)" per the report's own loss diagram) — a flat
+# GTI x capacity x PR estimate can't capture that clipping, so this is a
+# materially more accurate "expected" figure for a plant with a ~1.45
+# DC:AC ratio and real daytime curtailment.
+PVSYST_E_GRID_MWH = {1:123.3,2:85.8,3:146.9,4:178.4,5:180.9,6:189.3,
+                     7:188.6,8:181.5,9:176.1,10:140.0,11:89.7,12:85.3}
+PVSYST_ANNUAL_PR  = 0.7767         # report's own overall Performance Ratio
 
 MONTH_LABELS = ["Jan","Feb","Mar","Apr","May","Jun",
                 "Jul","Aug","Sep","Oct","Nov","Dec"]
@@ -643,13 +665,24 @@ def get_budget(year):
                           "MonthNum":range(1,13),"Year":year})
 
 def pvgis_df(years, ref_pr):
+    """
+    Expected_kWh anchors to PVsyst's own P50 monthly E_Grid (already net of
+    every real-world loss the report models, including grid-limitation
+    curtailment), scaled by ref_pr relative to the report's own overall PR
+    — so the slider still lets you explore what-if PR scenarios, but around
+    a realistic baseline instead of a flat GTI x capacity x PR estimate
+    that can't represent clipping on a ~1.45 DC:AC plant. At the slider's
+    default (0.78, close to the report's 0.7767), this reproduces the
+    PVsyst figures almost exactly.
+    """
     rows=[]
     for yr in years:
         for m in range(1,13):
             g = PVGIS_GTI[m]
             rows.append({"YearMonth":f"{yr}-{m:02d}","MonthNum":m,"Year":yr,
                          "GTI":g,"T_amb":T_AMB[m],
-                         "Expected_kWh": g * PLANT_PEAK_KW * ref_pr})
+                         "Expected_kWh": PVSYST_E_GRID_MWH[m] * 1000
+                                        * (ref_pr / PVSYST_ANNUAL_PR)})
     return pd.DataFrame(rows)
 
 def wcpr(energy_kwh, gti_kwh_m2, t_amb_c):
@@ -2360,6 +2393,13 @@ with t_intraday:
                 fillcolor="rgba(240,180,41,0.12)",
                 name="Production (kW, 15-min)"),
                 secondary_y=False)
+            # Grid export limit reference line — the plant's ~1.45 DC:AC
+            # ratio (1189 kWp / 821 kWac) means real curtailment whenever
+            # production would otherwise exceed this, visible directly as
+            # flat-topped clipping on clear-sky days.
+            fig.add_hline(y=PLANT_AC_KW, line_dash="dot", line_color="#ff5f5f",
+                          annotation_text=f"Grid export limit ({PLANT_AC_KW:.0f} kW)",
+                          annotation_position="top left", secondary_y=False)
 
             if dam_ok:
                 fig.add_trace(go.Scatter(
@@ -2805,8 +2845,13 @@ with t_loss:
             c3.metric("System PR",f"{pr_eff:.3f}")
             c4.metric("Unexplained Residual",
                       f"{unexplained:,.0f} kWh",
-                      help="Gap between bottom-up model and actual — "
-                           "investigate shading, clipping, or curtailment.")
+                      help="Gap between bottom-up model and actual. This cascade "
+                           "doesn't model a grid-curtailment step explicitly, so "
+                           "expect a meaningful chunk of this to be exactly that: "
+                           f"the plant's PVsyst report documents {PLANT_AC_KW:.0f} kW "
+                           f"AC export limit against {PLANT_PEAK_KW:.0f} kWp DC "
+                           "(~1.45 ratio) causing ~5.6% annual grid-limitation loss "
+                           "on its own — the rest is shading/other unmodeled effects.")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TAB: FINANCIAL  (Revenue waterfall, Capture Rate, DSCR)
