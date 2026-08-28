@@ -1427,9 +1427,21 @@ def _compute_day_revenue_from_frames(prod_json: dict, df_dam: pd.DataFrame) -> O
     df_p["bucket"] = df_p["dt"].dt.floor("15min")
     bucket_prod = (df_p.groupby("bucket")[yc].sum().reset_index()
                   .rename(columns={"bucket": "dt", yc: "kw_sum"}))
-    dr = pd.merge_asof(bucket_prod.sort_values("dt"),
-                       df_dam[["dt", "price"]].sort_values("dt"),
-                       on="dt", direction="backward", tolerance=pd.Timedelta("16min"))
+    # Both sides are already tz-aware in PLANT_TZ, but merge_asof requires an
+    # exact dtype match, not just equivalent UTC instants — and depending on
+    # how each side's timestamps were built upstream (fixed-offset arithmetic
+    # vs a named zone), pandas can hand back "Europe/Athens" on one side and
+    # a fixed "UTC+03:00"/"UTC+02:00" offset on the other (seen live on
+    # Streamlit Cloud's pandas/Python build), which raises MergeError even
+    # though the values themselves agree. Normalizing both to UTC — the one
+    # representation that's always canonical regardless of construction path
+    # — sidesteps the whole class of mismatch; convert back to PLANT_TZ after.
+    left  = bucket_prod.assign(dt=bucket_prod["dt"].dt.tz_convert("UTC")).sort_values("dt")
+    right = (df_dam[["dt", "price"]].assign(dt=df_dam["dt"].dt.tz_convert("UTC"))
+            .sort_values("dt"))
+    dr = pd.merge_asof(left, right, on="dt", direction="backward",
+                       tolerance=pd.Timedelta("16min"))
+    dr["dt"] = dr["dt"].dt.tz_convert(PLANT_TZ)
     dr["kwh"] = dr["kw_sum"] * (interval_min / 60)
     dr["rev"] = dr["kwh"] / 1000 * dr["price"]
 
@@ -2298,9 +2310,18 @@ with t_intraday:
                     # presentation extras (full-resolution, not bucketed) —
                     # not part of the stored figure, so fine to compute
                     # separately from the shared calc above.
-                    df_dam_s = df_dam[["dt","price"]].sort_values("dt")
-                    dr_full = pd.merge_asof(df_p[["dt",yc]].sort_values("dt"),
-                                            df_dam_s, on="dt", direction="backward",
+                    # Normalize to UTC before merging — see comment in
+                    # _compute_day_revenue_from_frames for why (dtype
+                    # mismatch between differently-constructed tz-aware
+                    # columns that pandas' merge_asof rejects outright).
+                    df_dam_s = (df_dam[["dt","price"]]
+                               .assign(dt=df_dam["dt"].dt.tz_convert("UTC"))
+                               .sort_values("dt"))
+                    left_p = (df_p[["dt",yc]]
+                             .assign(dt=df_p["dt"].dt.tz_convert("UTC"))
+                             .sort_values("dt"))
+                    dr_full = pd.merge_asof(left_p, df_dam_s, on="dt",
+                                            direction="backward",
                                             tolerance=pd.Timedelta("16min"))
                     cap_price = ((dr_full[yc] * dr_full["price"]).sum() /
                                  dr_full[yc].sum()) if dr_full[yc].sum() > 0 else np.nan
