@@ -1428,16 +1428,18 @@ def _compute_day_revenue_from_frames(prod_json: dict, df_dam: pd.DataFrame) -> O
     bucket_prod = (df_p.groupby("bucket")[yc].sum().reset_index()
                   .rename(columns={"bucket": "dt", yc: "kw_sum"}))
     # Both sides are already tz-aware in PLANT_TZ, but merge_asof requires an
-    # exact dtype match, not just equivalent UTC instants — and depending on
-    # how each side's timestamps were built upstream (fixed-offset arithmetic
-    # vs a named zone), pandas can hand back "Europe/Athens" on one side and
-    # a fixed "UTC+03:00"/"UTC+02:00" offset on the other (seen live on
-    # Streamlit Cloud's pandas/Python build), which raises MergeError even
-    # though the values themselves agree. Normalizing both to UTC — the one
-    # representation that's always canonical regardless of construction path
-    # — sidesteps the whole class of mismatch; convert back to PLANT_TZ after.
-    left  = bucket_prod.assign(dt=bucket_prod["dt"].dt.tz_convert("UTC")).sort_values("dt")
-    right = (df_dam[["dt", "price"]].assign(dt=df_dam["dt"].dt.tz_convert("UTC"))
+    # exact dtype match, not just equivalent instants — two ways that can
+    # silently diverge depending on how each side's timestamps were built
+    # upstream: a different tz representation ("Europe/Athens" vs a fixed
+    # "UTC+03:00"/"UTC+02:00" offset) AND a different time resolution
+    # (datetime64[ns] vs [us]/[ms] — pandas treats these as distinct dtypes
+    # too). Both variants reproduced and confirmed live on Streamlit Cloud's
+    # pandas/Python build. Forcing UTC + nanosecond resolution on both sides
+    # closes out both classes of mismatch; convert back to PLANT_TZ after.
+    left  = bucket_prod.assign(
+        dt=bucket_prod["dt"].dt.tz_convert("UTC").dt.as_unit("ns")).sort_values("dt")
+    right = (df_dam[["dt", "price"]]
+            .assign(dt=df_dam["dt"].dt.tz_convert("UTC").dt.as_unit("ns"))
             .sort_values("dt"))
     dr = pd.merge_asof(left, right, on="dt", direction="backward",
                        tolerance=pd.Timedelta("16min"))
@@ -2310,15 +2312,15 @@ with t_intraday:
                     # presentation extras (full-resolution, not bucketed) —
                     # not part of the stored figure, so fine to compute
                     # separately from the shared calc above.
-                    # Normalize to UTC before merging — see comment in
-                    # _compute_day_revenue_from_frames for why (dtype
-                    # mismatch between differently-constructed tz-aware
-                    # columns that pandas' merge_asof rejects outright).
+                    # Normalize to UTC + ns resolution before merging — see
+                    # comment in _compute_day_revenue_from_frames for why
+                    # (two distinct dtype-mismatch classes — tz repr and time
+                    # resolution — that pandas' merge_asof rejects outright).
                     df_dam_s = (df_dam[["dt","price"]]
-                               .assign(dt=df_dam["dt"].dt.tz_convert("UTC"))
+                               .assign(dt=df_dam["dt"].dt.tz_convert("UTC").dt.as_unit("ns"))
                                .sort_values("dt"))
                     left_p = (df_p[["dt",yc]]
-                             .assign(dt=df_p["dt"].dt.tz_convert("UTC"))
+                             .assign(dt=df_p["dt"].dt.tz_convert("UTC").dt.as_unit("ns"))
                              .sort_values("dt"))
                     dr_full = pd.merge_asof(left_p, df_dam_s, on="dt",
                                             direction="backward",
