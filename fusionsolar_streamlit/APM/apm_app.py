@@ -3178,34 +3178,62 @@ with t_forecast:
             )
             st.stop()
 
-        # Aggregate to daily
+        # Daily GHI/Temp stats (unaffected by the pricing rework below)
         df_fc["Date"]=df_fc["dt"].dt.date
-        df_day=(df_fc.groupby("Date")
-                .agg(Yield_kWh=("Yield_kWh","sum"),
-                     Peak_GHI=("GHI_Wm2","max"),
-                     Avg_Temp=("T_amb","mean"))
-                .reset_index())
-        df_day["Date"]=pd.to_datetime(df_day["Date"])
+        df_stats=(df_fc.groupby("Date")
+                 .agg(Peak_GHI=("GHI_Wm2","max"), Avg_Temp=("T_amb","mean"))
+                 .reset_index())
 
-        # Fetch next-day DAM (D+1 published by ADMIE ~13:00)
-        fc_dam={}
+        # Expand the hourly yield forecast to 15-min (repeat each hour's
+        # rate across its 4 quarters) so it can be priced against the real
+        # 15-min DAM curve instead of one flat daily average — the flat-
+        # average approach was overstating forecast revenue for exactly
+        # the reason the Financial tab's waterfall was: solar output
+        # concentrates in hours when price tends to sit BELOW the day's
+        # average, sometimes deeply so.
+        df_fc15 = pd.concat([
+            df_fc.assign(dt=df_fc["dt"] + pd.Timedelta(minutes=m),
+                        Yield_kWh=df_fc["Yield_kWh"]/4)
+            for m in range(0, 60, 15)
+        ], ignore_index=True)
+
         with st.spinner("Checking ENTSO-E for next-day prices…"):
-            fc_dates=df_day["Date"].dt.date.tolist()
+            fc_dates=sorted(df_fc["Date"].unique())
             dam_results=dam_daily_batch(fc_dates)
-            for d in fc_dates:
-                p=dam_results.get(d)
-                if p is not None and not p.empty and "price" in p.columns:
-                    fc_dam[d]=p["price"].mean()
-        if fc_dam:
-            df_day["DAM"]=df_day["Date"].dt.date.map(fc_dam)
-        else:
-            # Fall back to trailing monthly average
-            trail=dam_monthly_avg(date.today().year, date.today().month)
-            df_day["DAM"]=trail
 
-        df_day["Rev_EUR"]=df_day.apply(
-            lambda r: r["Yield_kWh"]*r["DAM"]/1000
-            if pd.notna(r["DAM"]) and r["DAM"]>0 else pd.NA, axis=1)
+        day_rows=[]
+        for d in fc_dates:
+            day15=df_fc15[df_fc15["dt"].dt.date==d][["dt","Yield_kWh"]].sort_values("dt")
+            p=dam_results.get(d)
+            if p is not None and not p.empty and "price" in p.columns:
+                left  = day15.assign(dt=day15["dt"].dt.tz_convert("UTC").dt.as_unit("ns"))
+                right = (p[["dt","price"]]
+                        .assign(dt=p["dt"].dt.tz_convert("UTC").dt.as_unit("ns"))
+                        .sort_values("dt"))
+                m=pd.merge_asof(left.sort_values("dt"), right, on="dt",
+                                direction="backward", tolerance=pd.Timedelta("16min"))
+                # Model real curtailment instead of assuming every forecast
+                # kWh gets sold: confirmed live this session that the plant
+                # is held near-zero whenever DAM price is worthless (>90%
+                # of measured curtailment events this year coincided with
+                # prices below 10 €/MWh) — crediting revenue for
+                # irradiance-modeled energy that would in practice never
+                # be produced/sold below ~1 €/MWh overstated the forecast.
+                m["Yield_kWh"]=m["Yield_kWh"].where(m["price"]>=1.0, 0.0)
+                yield_kwh=float(m["Yield_kWh"].sum())
+                rev_eur=float((m["Yield_kWh"]*m["price"]/1000).sum(skipna=True))
+                dam_avg=float(p["price"].mean())
+            else:
+                # No real price yet for this forecast day — fall back to the
+                # old flat-average behavior (can't zero out sub-€1 slots
+                # without 15-min granularity to zero them out in).
+                yield_kwh=float(df_fc.loc[df_fc["Date"]==d,"Yield_kWh"].sum())
+                dam_avg=dam_monthly_avg(date.today().year, date.today().month)
+                rev_eur=(yield_kwh*dam_avg/1000) if dam_avg and dam_avg>0 else pd.NA
+            day_rows.append({"Date":d,"Yield_kWh":yield_kwh,"DAM":dam_avg,"Rev_EUR":rev_eur})
+
+        df_day=pd.DataFrame(day_rows).merge(df_stats,on="Date",how="left")
+        df_day["Date"]=pd.to_datetime(df_day["Date"])
 
         # Chart
         figF=make_subplots(specs=[[{"secondary_y":True}]])
