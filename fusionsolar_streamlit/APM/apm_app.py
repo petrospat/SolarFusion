@@ -28,6 +28,11 @@ import plotly.graph_objects as go
 import openpyxl
 from plotly.subplots import make_subplots
 
+try:
+    import libsql
+except ImportError:
+    libsql = None
+
 warnings.filterwarnings("ignore")
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -389,7 +394,33 @@ def _measure_financial_curtailment_mwh(start: date, end: date) -> float:
 
 
 def _get_db():
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    """
+    Connects to Turso (persistent, survives Streamlit Cloud redeploys) if
+    [turso] url/auth_token are configured in secrets; falls back to the
+    local apm_data.db file otherwise. This is the only place a database
+    connection is opened — every other function goes through this, so
+    switching backends only required changing this one function.
+
+    Local SQLite writes on Streamlit Community Cloud don't survive a
+    redeploy: the container filesystem rebuilds from the git repo on every
+    push, so anything written via the live app (e.g. "Save daily revenue
+    to log") vanishes the next time the app redeploys or wakes from sleep
+    — confirmed live when saved Intraday days disappeared after a
+    subsequent deploy. Turso is a small external database that lives
+    outside the app's container, so writes actually persist.
+    """
+    turso_url = turso_token = None
+    try:
+        turso_url = st.secrets["turso"]["url"]
+        turso_token = st.secrets["turso"]["auth_token"]
+    except Exception:
+        pass
+
+    if turso_url and turso_token and libsql is not None:
+        conn = libsql.connect(turso_url, auth_token=turso_token)
+    else:
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+
     conn.execute("""CREATE TABLE IF NOT EXISTS alerts(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         ts TEXT, severity TEXT, category TEXT,
