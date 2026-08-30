@@ -393,33 +393,26 @@ def _measure_financial_curtailment_mwh(start: date, end: date) -> float:
     return lost_kwh / 1000
 
 
-def _get_db():
-    """
-    Connects to Turso (persistent, survives Streamlit Cloud redeploys) if
-    [turso] url/auth_token are configured in secrets; falls back to the
-    local apm_data.db file otherwise. This is the only place a database
-    connection is opened — every other function goes through this, so
-    switching backends only required changing this one function.
+_schema_ready = False
 
-    Local SQLite writes on Streamlit Community Cloud don't survive a
-    redeploy: the container filesystem rebuilds from the git repo on every
-    push, so anything written via the live app (e.g. "Save daily revenue
-    to log") vanishes the next time the app redeploys or wakes from sleep
-    — confirmed live when saved Intraday days disappeared after a
-    subsequent deploy. Turso is a small external database that lives
-    outside the app's container, so writes actually persist.
-    """
-    turso_url = turso_token = None
-    try:
-        turso_url = st.secrets["turso"]["url"]
-        turso_token = st.secrets["turso"]["auth_token"]
-    except Exception:
-        pass
 
-    if turso_url and turso_token and libsql is not None:
-        conn = libsql.connect(turso_url, auth_token=turso_token)
-    else:
-        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+def _ensure_schema(conn) -> None:
+    """
+    Run the CREATE TABLE/INDEX statements exactly once per process.
+
+    _get_db() is called from ~14 sites throughout the app, several inside
+    per-day loops (e.g. compute_daily_revenue_batch). Against local SQLite
+    re-running these IF NOT EXISTS statements on every call was free; against
+    Turso each one is a separate network round trip, so every single read or
+    write was paying for 9 unnecessary round trips before doing any real
+    work — the main reason storing data got much slower after the Turso
+    migration. A module-level flag is enough: schema creation is idempotent
+    and shared across the whole app, so "once per process" is correct, not
+    just faster.
+    """
+    global _schema_ready
+    if _schema_ready:
+        return
 
     conn.execute("""CREATE TABLE IF NOT EXISTS alerts(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -468,6 +461,38 @@ def _get_db():
         source TEXT NOT NULL, fetched_ts TEXT NOT NULL,
         PRIMARY KEY (timestamp_utc, bidding_zone))""")
     conn.commit()
+    _schema_ready = True
+
+
+def _get_db():
+    """
+    Connects to Turso (persistent, survives Streamlit Cloud redeploys) if
+    [turso] url/auth_token are configured in secrets; falls back to the
+    local apm_data.db file otherwise. This is the only place a database
+    connection is opened — every other function goes through this, so
+    switching backends only required changing this one function.
+
+    Local SQLite writes on Streamlit Community Cloud don't survive a
+    redeploy: the container filesystem rebuilds from the git repo on every
+    push, so anything written via the live app (e.g. "Save daily revenue
+    to log") vanishes the next time the app redeploys or wakes from sleep
+    — confirmed live when saved Intraday days disappeared after a
+    subsequent deploy. Turso is a small external database that lives
+    outside the app's container, so writes actually persist.
+    """
+    turso_url = turso_token = None
+    try:
+        turso_url = st.secrets["turso"]["url"]
+        turso_token = st.secrets["turso"]["auth_token"]
+    except Exception:
+        pass
+
+    if turso_url and turso_token and libsql is not None:
+        conn = libsql.connect(turso_url, auth_token=turso_token)
+    else:
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+
+    _ensure_schema(conn)
     return conn
 
 
